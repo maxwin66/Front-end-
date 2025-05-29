@@ -1,119 +1,66 @@
-body {
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #E9F1FA; /* Biru muda untuk background */
-    color: #01257D; /* Biru tua untuk teks */
-}
-
-header {
-    background-color: #01257D; /* Biru tua untuk header */
-    color: white;
-    padding: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.logo {
-    font-size: 1.5rem;
-    font-weight: bold;
-}
-
-nav a {
-    color: white;
-    margin-left: 1.5rem;
-    text-decoration: none;
-    font-weight: 500;
-}
-
-nav a:hover {
-    color: #00ABE4; /* Biru cerah saat hover */
-}
-
 .hero {
     text-align: center;
-    padding: 4rem 2rem;
-    background: url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png') no-repeat center/cover;
-    color: white;
+    padding: 50px 20px;
+    background: #e6f0fa;
 }
 
-.hero h1 {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-}
-
-.hero p {
-    font-size: 1.2rem;
-    margin-bottom: 2rem;
+.guide {
+    font-size: 1.1em;
+    color: #555;
+    margin: 10px 0;
 }
 
 .hero-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 1rem;
+    margin: 20px 0;
 }
 
 .cta {
-    background-color: #00ABE4; /* Biru cerah untuk tombol */
+    background: #6ba8d1;
     color: white;
     border: none;
-    padding: 0.8rem 2rem;
-    font-size: 1rem;
+    padding: 10px 20px;
+    margin: 5px;
     cursor: pointer;
-    border-radius: 5px;
 }
 
 .cta:hover {
-    background-color: #0198C7; /* Biru agak gelap saat hover */
+    background: #5a9ac5;
 }
 
-.secondary {
-    background-color: #0198C7; /* Biru lebih gelap untuk tombol sekunder */
-}
-
-.secondary:hover {
-    background-color: #017BA5; /* Biru lebih gelap lagi saat hover */
-}
-
-.content {
-    padding: 2rem;
-    text-align: center;
-}
-
-.content h2 {
-    color: #01257D;
-    font-size: 2rem;
-}
-
-.content p {
-    font-size: 1.1rem;
-    line-height: 1.6;
-}
-
-footer {
-    background-color: #01257D;
+.cta.gmail {
+    background: #4285f4;
     color: white;
-    text-align: center;
-    padding: 1rem;
-    position: fixed;
-    width: 100%;
-    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-@media (max-width: 600px) {
-    .hero h1 {
-        font-size: 1.8rem;
-    }
-    .hero p {
-        font-size: 1rem;
-    }
-    nav a {
-        margin-left: 1rem;
-    }
-    .hero-buttons {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
+.cta.gmail::before {
+    content: url('path/to/gmail-icon.png'); /* Ganti dengan URL ikon Gmail */
+    width: 20px;
+    height: 20px;
+}
+
+.feature-preview {
+    margin-top: 20px;
+}
+
+.feature-btn {
+    background: #6ba8d1;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 5px;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.feature-btn:disabled:hover {
+    background: #6ba8d1;
+}
+
+.note {
+    font-size: 0.9em;
+    color: #777;
+    margin-top: 5px;
 }

@@ -1,0 +1,119 @@
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #E9F1FA; /* Biru muda untuk background */
+    color: #01257D; /* Biru tua untuk teks */
+}
+
+header {
+    background-color: #01257D; /* Biru tua untuk header */
+    color: white;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+nav a {
+    color: white;
+    margin-left: 1.5rem;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+nav a:hover {
+    color: #00ABE4; /* Biru cerah saat hover */
+}
+
+.hero {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png') no-repeat center/cover;
+    color: white;
+}
+
+.hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.hero p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+}
+
+.hero-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.cta {
+    background-color: #00ABE4; /* Biru cerah untuk tombol */
+    color: white;
+    border: none;
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.cta:hover {
+    background-color: #0198C7; /* Biru agak gelap saat hover */
+}
+
+.secondary {
+    background-color: #0198C7; /* Biru lebih gelap untuk tombol sekunder */
+}
+
+.secondary:hover {
+    background-color: #017BA5; /* Biru lebih gelap lagi saat hover */
+}
+
+.content {
+    padding: 2rem;
+    text-align: center;
+}
+
+.content h2 {
+    color: #01257D;
+    font-size: 2rem;
+}
+
+.content p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+footer {
+    background-color: #01257D;
+    color: white;
+    text-align: center;
+    padding: 1rem;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+}
+
+@media (max-width: 600px) {
+    .hero h1 {
+        font-size: 1.8rem;
+    }
+    .hero p {
+        font-size: 1rem;
+    }
+    nav a {
+        margin-left: 1rem;
+    }
+    .hero-buttons {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}

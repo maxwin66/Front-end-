@@ -1,7 +1,10 @@
 .hero {
     text-align: center;
     padding: 50px 20px;
-    background: #e6f0fa;
+    background-image: url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 .guide {

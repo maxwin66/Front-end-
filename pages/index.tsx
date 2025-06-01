@@ -1,5 +1,7 @@
 import Head from "next/head";
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
+
 export default function Home() {
   return (
     <>
@@ -32,7 +34,7 @@ export default function Home() {
               Mulai dengan mode tamu, atau daftar untuk fitur lebih banyak!
             </p>
             <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
-              <a href="https://backend-cb98.onrender.com/auth/google" target="_blank" rel="noopener">
+              <a href={`${BACKEND_URL}/auth/google`} target="_blank" rel="noopener">
                 <button className="flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-gray-800 shadow-md font-semibold border border-sky-300 hover:bg-sky-50 transition group">
                   <svg width="22" height="22" viewBox="0 0 48 48" className="inline-block">
                     <g><path fill="#4285F4" d="M43.6 20.5H42V20.4H24V27.6H35.2C33.6 32.2 29.2 35.4 24 35.4c-6.1 0-11.1-5-11.1-11.1s5-11.1 11.1-11.1c2.6 0 5 .9 6.9 2.6l5.2-5.2C33.3 7.3 28.9 5.4 24 5.4c-10.3 0-18.6 8.3-18.6 18.6s8.3 18.6 18.6 18.6c9.3 0 17.2-6.7 18.5-15.4.1-.5.1-1 .1-1.5 0-1.2-.1-2.3-.2-3.2z"/><path fill="#34A853" d="M6.3 14.7l5.7 4.2c1.5-2.8 3.9-5 6.7-6.5L12 8.9C9.1 11.4 6.7 14.7 6.3 14.7z"/><path fill="#FBBC05" d="M24 8.7c2.6 0 5 .9 6.9 2.6l5.2-5.2C33.3 7.3 28.9 5.4 24 5.4c-5.6 0-10.5 2.3-14.1 6l5.7 4.4C18.9 10.6 21.3 8.7 24 8.7z"/><path fill="#EA4335" d="M24 43.2c4.9 0 9.3-1.7 12.8-4.6l-5.9-4.8c-2 1.4-4.6 2.2-7.4 2.2-5.2 0-9.6-3.2-11.2-7.7l-5.6 4.3c3.6 7 11.1 11.6 19.1 11.6z"/><path fill="none" d="M0 0h48v48H0z"/></g>
@@ -40,7 +42,7 @@ export default function Home() {
                   Daftar dengan Gmail
                 </button>
               </a>
-              <a href="https://backend-cb98.onrender.com" target="_blank" rel="noopener">
+              <a href={BACKEND_URL} target="_blank" rel="noopener">
                 <button className="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-400 to-indigo-500 text-white font-bold shadow-md hover:scale-105 transform transition">
                   Mulai sebagai Tamu
                 </button>

@@ -21,12 +21,15 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
     setValue("");
     setLoading(true);
 
+    // Pastikan guest juga dapat user_email unik
+    let user_email = email && email.trim() !== "" ? email : `guest-${Math.random().toString(36).slice(2, 10)}`;
+
     try {
       const res = await fetch("https://backend-cb98.onrender.com/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          user_email: email || "",
+          user_email,
           message: userMsg.text,
           model_select: "x-ai/grok-3-mini-beta"
         })
@@ -70,26 +73,29 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
         className="w-full max-w-lg bg-white/60 rounded-2xl p-4 shadow mb-4 flex-1 flex flex-col"
         style={{ minHeight: 400, maxHeight: "70vh", overflowY: "auto" }}
       >
-        <div className="flex-1 space-y-2 overflow-y-auto pb-2">
+        <div className="flex-1 flex flex-col gap-2 overflow-y-auto pb-2">
           {messages.map((msg, i) => (
             <div
               key={i}
-              className={`w-full flex ${msg.from === "user" ? "justify-end" : "justify-start"}`}
+              className={`flex ${msg.from === "user" ? "justify-end" : "justify-start"} w-full`}
             >
               <div
-                className={`rounded-2xl px-4 py-2 break-words shadow
+                className={`
+                  rounded-2xl px-4 py-2 break-words shadow
                   ${msg.from === "user"
                     ? "text-white"
                     : "text-blue-900 bg-white/90 border border-blue-100"}
                 `}
-                style={
-                  msg.from === "user"
-                    ? {
-                        maxWidth: "70%",
-                        background: `linear-gradient(to right, ${theme.color}, ${theme.color}CC)`
-                      }
-                    : { maxWidth: "70%" }
-                }
+                style={{
+                  display: "inline-block",
+                  maxWidth: "80vw",
+                  width: "fit-content",
+                  minWidth: "36px",
+                  wordBreak: "break-word",
+                  background: msg.from === "user"
+                    ? `linear-gradient(to right, ${theme.color}, ${theme.color}cc)`
+                    : undefined,
+                }}
               >
                 {msg.text}
               </div>
@@ -125,4 +131,4 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
       </div>
     </div>
   );
-                                        }
+    }

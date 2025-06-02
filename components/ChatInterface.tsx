@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import axios from "axios";
 
 interface ChatInterfaceProps {
   email: string;
@@ -18,22 +17,28 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ email, isGuest, credits: 
   const [loading, setLoading] = useState(false);
   const [credits, setCredits] = useState(initialCredits);
 
+  // Ganti dengan fetch bawaan JS agar tanpa install library
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || credits <= 0) return;
     const question = input.trim();
     setChat([...chat, { role: "user", content: question }]);
     setInput("");
     setLoading(true);
 
     try {
-      const apiUrl = "https://backend-bpup.onrender.com/api/chat";
-      const res = await axios.post(apiUrl, {
-        user_email: isGuest ? "" : email,
-        message: question,
-        model_select: "OpenRouter (Grok 3 Mini Beta)",
+      const res = await fetch("https://backend-bpup.onrender.com/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_email: isGuest ? "" : email,
+          message: question,
+          model_select: "OpenRouter (Grok 3 Mini Beta)",
+        }),
       });
-      setChat((prev) => [...prev, { role: "ai", content: res.data.reply }]);
-      setCredits(Number(res.data.credits));
+      if (!res.ok) throw new Error("Gagal response");
+      const data = await res.json();
+      setChat((prev) => [...prev, { role: "ai", content: data.reply }]);
+      setCredits(Number(data.credits));
     } catch (e) {
       setChat((prev) => [
         ...prev,
@@ -113,7 +118,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ email, isGuest, credits: 
         <div style={{ display: "flex", gap: 8 }}>
           <input
             type="text"
-            className="input input-bordered w-full"
             disabled={loading || credits <= 0}
             value={input}
             placeholder={
@@ -133,7 +137,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ email, isGuest, credits: 
             }}
           />
           <button
-            className="btn btn-primary"
             disabled={loading || credits <= 0}
             onClick={handleSend}
             style={{

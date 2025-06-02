@@ -70,7 +70,7 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
         MyKugy Ai Chat Anime
       </div>
       <div
-        className="w-full max-w-lg bg-white/60 rounded-2xl p-4 shadow mb-4 flex-1 flex flex-col"
+        className="w-full max-w-sm bg-white/60 rounded-2xl p-4 shadow mb-4 flex-1 flex flex-col"
         style={{ minHeight: 400, maxHeight: "70vh", overflowY: "auto" }}
       >
         <div className="flex-1 flex flex-col gap-2 overflow-y-auto pb-2">
@@ -131,4 +131,4 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
       </div>
     </div>
   );
-    }
+          }

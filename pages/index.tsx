@@ -1,45 +1,58 @@
-import { useState, useEffect } from "react";
-import LandingPage from "../components/LandingPage";
+import { useState } from "react";
+import HomeSelect from "../components/HomeSelect";
 import ChatInterface from "../components/ChatInterface";
 
-const Home = () => {
-  const [mode, setMode] = useState<"" | "guest" | "user">("");
-  const [email, setEmail] = useState<string>("");
-  const [credits, setCredits] = useState<number>(0);
+const IndexPage = () => {
+  const [step, setStep] = useState<"start" | "select" | "guest" | "login">("start");
+  const [credits, setCredits] = useState(0);
+  const [email, setEmail] = useState("");
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const gotEmail = params.get("email");
-    if (gotEmail) {
-      setEmail(gotEmail);
-      setMode("user");
-      setCredits(75);
-      window.history.replaceState({}, document.title, "/");
-    }
-  }, []);
-
-  const handleLogin = () => {
-    window.location.href = "https://backend-bpup.onrender.com/auth/google";
+  // Simulasi login Google
+  const handleGoogleLogin = () => {
+    // Di produksi, redirect ke backend Google OAuth dan set email user dari backend
+    setStep("login");
+    setCredits(75);
+    setEmail("kamu@email.com"); // replace sesuai hasil login backend
   };
 
   const handleGuest = () => {
-    setMode("guest");
+    setStep("guest");
     setCredits(20);
+    setEmail(""); // mode tamu tidak ada email
   };
 
-  if (mode === "user" || mode === "guest") {
+  // Step 1: Halaman awal, hanya 1 tombol "Mulai"
+  if (step === "start") {
     return (
-      <ChatInterface
-        email={email}
-        isGuest={mode === "guest"}
-        credits={credits}
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <button
+          className="px-8 py-3 rounded-lg bg-gradient-to-r from-blue-400 to-green-300 text-white text-xl font-bold shadow-lg"
+          onClick={() => setStep("select")}
+        >
+          Mulai
+        </button>
+      </div>
+    );
+  }
+
+  // Step 2: Pilihan daftar/guest, background anime
+  if (step === "select") {
+    return (
+      <HomeSelect
+        onGoogle={handleGoogleLogin}
+        onGuest={handleGuest}
       />
     );
   }
 
+  // Step 3: Halaman chat AI, background anime
   return (
-    <LandingPage onLogin={handleLogin} onGuest={handleGuest} />
+    <ChatInterface
+      email={email}
+      isGuest={step === "guest"}
+      credits={credits}
+    />
   );
 };
 
-export default Home;
+export default IndexPage;

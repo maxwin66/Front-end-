@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import Head from "next/head";
 
-// Pakai gambar background dari repo kamu sendiri!
 const ANIME_BG_URL = "https://raw.githubusercontent.com/Minatoz997/Front-end-/main/angel_background.png";
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://98.onrender.com";
 
@@ -57,7 +56,7 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>MyKugy - AI Chat</title>
+        <title>MyKugy - AI Chat Anime</title>
         <meta name="description" content="MyKugy, asisten AI imut dengan nuansa anime biru." />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -70,7 +69,9 @@ export default function Home() {
         }}
       >
         <div className="bg-white/80 rounded-xl shadow-xl p-8 flex flex-col items-center max-w-md w-full mx-2 mt-16 mb-16">
-          <h1 className="text-3xl font-bold mb-4 text-sky-500 drop-shadow font-sora text-center">MyKugy - AI Chat Anime</h1>
+          <h1 className="text-3xl font-bold mb-4 text-sky-500 drop-shadow font-sora text-center">
+            MyKugy - AI Chat Anime
+          </h1>
           {!email ? (
             <>
               <button
@@ -82,7 +83,9 @@ export default function Home() {
             </>
           ) : (
             <>
-              <div className="mb-2 text-sky-700 text-center">Login sebagai <b>{email}</b></div>
+              <div className="mb-2 text-sky-700 text-center">
+                Login sebagai <b>{email}</b>
+              </div>
               <button
                 onClick={handleLogout}
                 className="mb-4 text-xs text-red-500 underline"
@@ -113,9 +116,9 @@ export default function Home() {
             </>
           )}
         </div>
-        <div className="text-white/60 text-sm mt-2 mb-4 drop-shadow text-center">
-          © 2025 MyKugy. Powered by OpenRouter AI. <br />
-          <span className="opacity-70">Tema anime hanya visual, bukan karakter asli</span>
+        <div className="text-white/70 text-sm mt-2 mb-4 drop-shadow text-center">
+          © 2025 MyKugy. Powered by OpenRouter AI.<br />
+          Tema anime hanya visual.
         </div>
       </div>
     </>

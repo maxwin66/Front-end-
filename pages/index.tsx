@@ -3,25 +3,22 @@ import HomeSelect from "../components/HomeSelect";
 import ChatInterface from "../components/ChatInterface";
 
 const IndexPage = () => {
+  // Tambahkan "login" di tipe step!
   const [step, setStep] = useState<"start" | "select" | "guest" | "login">("start");
   const [credits, setCredits] = useState(0);
   const [email, setEmail] = useState("");
 
   // Handler: Google login
   const handleGoogleLogin = () => {
-    // Redirect ke backend untuk login Google
     window.location.href = "https://backend-bpup.onrender.com/auth/google";
   };
 
-  // Handler: guest mode langsung jalan
   const handleGuest = () => {
     setStep("guest");
     setCredits(20);
-    setEmail(""); // guest tidak punya email
+    setEmail("");
   };
 
-  // Ketika backend redirect balik ke FE setelah login, tangkap email dari query (contoh: ?email=xxx)
-  // Ini bisa diperbaiki jika backend-mu mengirim email user sebagai query param setelah login sukses.
   if (typeof window !== "undefined" && step !== "login") {
     const params = new URLSearchParams(window.location.search);
     const gotEmail = params.get("email");
@@ -29,12 +26,10 @@ const IndexPage = () => {
       setEmail(gotEmail);
       setStep("login");
       setCredits(75);
-      // Hapus query biar ga muncul terus
       window.history.replaceState({}, document.title, "/");
     }
   }
 
-  // Step 1: halaman awal
   if (step === "start") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -48,7 +43,6 @@ const IndexPage = () => {
     );
   }
 
-  // Step 2: Pilihan daftar/guest, background anime
   if (step === "select") {
     return (
       <HomeSelect
@@ -58,7 +52,6 @@ const IndexPage = () => {
     );
   }
 
-  // Step 3: Chat AI (mode login/guest), background anime
   return (
     <ChatInterface
       email={email}

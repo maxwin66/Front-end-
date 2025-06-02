@@ -7,21 +7,34 @@ const IndexPage = () => {
   const [credits, setCredits] = useState(0);
   const [email, setEmail] = useState("");
 
-  // Simulasi login Google
+  // Handler: Google login
   const handleGoogleLogin = () => {
-    // Di produksi, redirect ke backend Google OAuth dan set email user dari backend
-    setStep("login");
-    setCredits(75);
-    setEmail("kamu@email.com"); // replace sesuai hasil login backend
+    // Redirect ke backend untuk login Google
+    window.location.href = "https://backend-bpup.onrender.com/auth/google";
   };
 
+  // Handler: guest mode langsung jalan
   const handleGuest = () => {
     setStep("guest");
     setCredits(20);
-    setEmail(""); // mode tamu tidak ada email
+    setEmail(""); // guest tidak punya email
   };
 
-  // Step 1: Halaman awal, hanya 1 tombol "Mulai"
+  // Ketika backend redirect balik ke FE setelah login, tangkap email dari query (contoh: ?email=xxx)
+  // Ini bisa diperbaiki jika backend-mu mengirim email user sebagai query param setelah login sukses.
+  if (typeof window !== "undefined" && step !== "login") {
+    const params = new URLSearchParams(window.location.search);
+    const gotEmail = params.get("email");
+    if (gotEmail && step !== "login") {
+      setEmail(gotEmail);
+      setStep("login");
+      setCredits(75);
+      // Hapus query biar ga muncul terus
+      window.history.replaceState({}, document.title, "/");
+    }
+  }
+
+  // Step 1: halaman awal
   if (step === "start") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -45,7 +58,7 @@ const IndexPage = () => {
     );
   }
 
-  // Step 3: Halaman chat AI, background anime
+  // Step 3: Chat AI (mode login/guest), background anime
   return (
     <ChatInterface
       email={email}

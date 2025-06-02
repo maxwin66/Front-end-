@@ -3,7 +3,7 @@ import HomeSelect from "../components/HomeSelect";
 import ChatInterface from "../components/ChatInterface";
 
 const IndexPage = () => {
-  // Tambahkan "login" di union type!
+  // Pastikan "login" ada di union type!
   const [step, setStep] = useState<"start" | "select" | "guest" | "login">("start");
   const [credits, setCredits] = useState(0);
   const [email, setEmail] = useState("");

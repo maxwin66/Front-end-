@@ -1,128 +1,86 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useContext, useState } from "react";
+import { UiContext } from "../pages/_app";
 
-interface ChatInterfaceProps {
-  email: string;
-  isGuest: boolean;
-  credits: number;
-  bgStyle?: React.CSSProperties;
-}
+// Contoh chat sederhana
+export default function ChatInterface({ email, isGuest, credits, bgStyle }: any) {
+  const { theme, darkMode, lang } = useContext(UiContext);
+  const [value, setValue] = useState("");
+  const [messages, setMessages] = useState([
+    { from: "ai", text: "Halo! Ada yang bisa aku bantu?" }
+  ]);
 
-interface ChatItem {
-  role: "user" | "ai";
-  content: string;
-}
-
-const ChatInterface: React.FC<ChatInterfaceProps> = ({
-  email,
-  isGuest,
-  credits: initialCredits,
-  bgStyle,
-}) => {
-  const [input, setInput] = useState("");
-  const [chat, setChat] = useState<ChatItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [credits, setCredits] = useState(initialCredits);
-
-  // Ref untuk auto-scroll ke bawah
-  const chatBottomRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (chatBottomRef.current) {
-      chatBottomRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [chat]);
-
-  const handleSend = async () => {
-    if (!input.trim() || credits <= 0) return;
-    const question = input.trim();
-    setChat([...chat, { role: "user", content: question }]);
-    setInput("");
-    setLoading(true);
-
-    try {
-      const res = await fetch("https://backend-cb98.onrender.com/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_email: isGuest ? "" : email,
-          message: question,
-          model_select: "OpenRouter (Grok 3 Mini Beta)",
-        }),
-      });
-      if (!res.ok) throw new Error("Gagal response");
-      const data = await res.json();
-      setChat((prev) => [...prev, { role: "ai", content: data.reply }]);
-      setCredits(Number(data.credits));
-    } catch (e) {
-      setChat((prev) => [
-        ...prev,
-        { role: "ai", content: "Maaf, AI sedang tidak bisa merespon." },
+  const handleSend = () => {
+    if (!value.trim()) return;
+    setMessages([...messages, { from: "user", text: value }]);
+    setValue("");
+    // Simulasi balasan AI
+    setTimeout(() => {
+      setMessages(msgs => [
+        ...msgs,
+        { from: "ai", text: "Aku AI Anime siap menemani chatmu!" }
       ]);
-    }
-    setLoading(false);
+    }, 500);
   };
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center"
+      className="min-h-screen flex flex-col items-center"
       style={bgStyle}
     >
-      <div className="bg-white/95 p-6 rounded-2xl shadow-xl max-w-2xl w-full min-h-[520px]">
-        <div className="font-bold text-blue-500 mb-1">
-          MyKugy - AI Chat Anime
-        </div>
-        <div className="mb-2">
-          {isGuest
-            ? (
-              <>Mode Tamu <span className="text-sm text-gray-500">(20 kredit)</span></>
-            )
-            : (
-              <>Login sebagai <b>{email}</b> <span className="text-sm text-gray-500">(75 kredit)</span></>
-            )}
-        </div>
-        <div className="mb-2 min-h-[300px] max-h-[420px] overflow-y-auto bg-blue-50 rounded-lg px-2 py-1">
-          {chat.length === 0 && (
-            <div className="text-gray-400">Tanyakan apapun ke AI MyKugy di sini!</div>
-          )}
-          {chat.map((item, idx) => (
+      <div
+        className="text-xl font-bold text-center my-4"
+        style={{ color: theme.color }}
+      >
+        MyKugy Ai Chat Anime
+      </div>
+      <div className="w-full max-w-lg bg-white/60 rounded-2xl p-4 shadow mb-4 flex-1 flex flex-col"
+        style={{ minHeight: 400 }}
+      >
+        <div className="flex-1 space-y-2 overflow-y-auto">
+          {messages.map((msg, i) => (
             <div
-              key={idx}
-              className={item.role === "user" ? "text-right" : "text-left"}
+              key={i}
+              className={`flex ${msg.from === "user" ? "justify-end" : "justify-start"}`}
             >
-              <span className={item.role === "user"
-                ? "inline-block bg-blue-200 rounded-lg px-2 py-1 my-1"
-                : "inline-block bg-green-100 rounded-lg px-2 py-1 my-1"
-              }>
-                <b>{item.role === "user" ? "Kamu" : "AI"}:</b> {item.content}
-              </span>
+              <div
+                className={`rounded-xl px-4 py-2 max-w-xs ${
+                  msg.from === "user"
+                    ? "bg-gradient-to-r text-white"
+                    : "bg-white text-blue-900"
+                }`}
+                style={
+                  msg.from === "user"
+                    ? {
+                        background: `linear-gradient(to right, ${theme.color}, ${theme.color}CC)`,
+                      }
+                    : {}
+                }
+              >
+                {msg.text}
+              </div>
             </div>
           ))}
-          <div ref={chatBottomRef} />
         </div>
-        <div className="flex gap-2 mt-2">
+        <div className="flex gap-2 mt-3">
           <input
             type="text"
-            className="flex-1 rounded-lg border border-blue-200 px-3 py-2"
-            disabled={loading || credits <= 0}
-            value={input}
-            placeholder={credits <= 0 ? "Kredit habis" : "Tulis pertanyaan kamu..."}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            className="flex-1 rounded-full px-4 py-2 border"
+            placeholder={lang === "id" ? "Ketik pesan..." : lang === "en" ? "Type a message..." : "メッセージを入力..."}
           />
           <button
-            className="rounded-lg bg-gradient-to-r from-blue-400 to-green-300 text-white font-bold px-5 py-2 disabled:opacity-60"
-            disabled={loading || credits <= 0}
+            className={`px-6 py-2 rounded-full font-bold bg-gradient-to-r ${theme.gradient} text-white shadow transition`}
             onClick={handleSend}
+            style={{ letterSpacing: '1px' }}
           >
-            {loading ? "..." : "Kirim"}
+            {lang === "id" ? "Kirim" : lang === "en" ? "Send" : "送信"}
           </button>
         </div>
-        <div className="mt-2 text-sm text-gray-500">
-          Kredit tersisa: <b>{credits}</b>
-        </div>
+      </div>
+      <div className="text-xs text-blue-900/70 mb-2">
+        {isGuest ? "Mode Tamu" : email} | Kredit: {credits}
       </div>
     </div>
   );
-};
-
-export default ChatInterface;
+}

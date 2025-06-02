@@ -10,7 +10,6 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto scroll to bottom if new message
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -23,15 +22,18 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
     setLoading(true);
 
     try {
-      const res = await fetch("https://backend-cb98.onrender.com/api/grok", {
+      const res = await fetch("https://backend-cb98.onrender.com/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          user_email: email || "",
           message: userMsg.text,
-          email: email || "",
-          lang: lang
+          model_select: "x-ai/grok-3-mini-beta"
         })
       });
+      if (!res.ok) {
+        throw new Error("API error " + res.status);
+      }
       const data = await res.json();
       setMessages(prev => [
         ...prev,
@@ -123,4 +125,4 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
       </div>
     </div>
   );
-}
+                                        }

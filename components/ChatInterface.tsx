@@ -1,4 +1,4 @@
-import { useContext, useState, useRef } from "react";
+import { useContext, useState, useRef, useEffect } from "react";
 import { UiContext } from "../pages/_app";
 
 export default function ChatInterface({ email, isGuest, credits, bgStyle }: any) {
@@ -10,11 +10,15 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Fetch ke backend kamu setiap kirim pesan
+  // Auto scroll to bottom if new message
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   const handleSend = async () => {
     if (!value.trim() || loading) return;
     const userMsg = { from: "user", text: value };
-    setMessages([...messages, userMsg]);
+    setMessages(prev => [...prev, userMsg]);
     setValue("");
     setLoading(true);
 
@@ -23,28 +27,23 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: value,
+          message: userMsg.text,
           email: email || "",
           lang: lang
         })
       });
       const data = await res.json();
-      setMessages(msgs => [
-        ...msgs,
-        { from: "ai", text: (data.reply || "Gomen, aku nggak ngerti. Coba tanya lagi ya!") }
+      setMessages(prev => [
+        ...prev,
+        { from: "ai", text: (data.reply || "Maaf, AI tidak bisa menjawab sekarang.") }
       ]);
     } catch (e) {
-      setMessages(msgs => [
-        ...msgs,
+      setMessages(prev => [
+        ...prev,
         { from: "ai", text: "Maaf, terjadi error koneksi ke server. Coba lagi nanti." }
       ]);
     }
     setLoading(false);
-
-    // Auto scroll ke bawah
-    setTimeout(() => {
-      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 200);
   };
 
   const handleKeyDown = e => {
@@ -65,25 +64,29 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
       >
         MyKugy Ai Chat Anime
       </div>
-      <div className="w-full max-w-lg bg-white/60 rounded-2xl p-4 shadow mb-4 flex-1 flex flex-col"
+      <div
+        className="w-full max-w-lg bg-white/60 rounded-2xl p-4 shadow mb-4 flex-1 flex flex-col"
         style={{ minHeight: 400, maxHeight: "70vh", overflowY: "auto" }}
       >
-        <div className="flex-1 space-y-2 overflow-y-auto">
+        <div className="flex-1 space-y-2 overflow-y-auto pb-2">
           {messages.map((msg, i) => (
             <div
               key={i}
-              className={`flex ${msg.from === "user" ? "justify-end" : "justify-start"}`}
+              className={`w-full flex ${msg.from === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`rounded-xl px-4 py-2 max-w-xs break-words ${
-                  msg.from === "user"
-                    ? "bg-gradient-to-r text-white"
-                    : "bg-white text-blue-900"
-                }`}
+                className={`rounded-2xl px-4 py-2 break-words shadow
+                  ${msg.from === "user"
+                    ? "text-white"
+                    : "text-blue-900 bg-white/90 border border-blue-100"}
+                `}
                 style={
                   msg.from === "user"
-                    ? { background: `linear-gradient(to right, ${theme.color}, ${theme.color}CC)` }
-                    : {}
+                    ? {
+                        maxWidth: "70%",
+                        background: `linear-gradient(to right, ${theme.color}, ${theme.color}CC)`
+                      }
+                    : { maxWidth: "70%" }
                 }
               >
                 {msg.text}
@@ -107,7 +110,7 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
             className={`px-6 py-2 rounded-full font-bold bg-gradient-to-r ${theme.gradient} text-white shadow transition`}
             onClick={handleSend}
             style={{ letterSpacing: '1px' }}
-            disabled={loading}
+            disabled={loading || !value.trim()}
           >
             {loading
               ? (lang === "id" ? "..." : lang === "en" ? "..." : "...")
@@ -120,4 +123,4 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
       </div>
     </div>
   );
-                 }
+}

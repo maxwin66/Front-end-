@@ -70,8 +70,13 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
         MyKugy Ai Chat Anime
       </div>
       <div
-        className="w-full max-w-sm bg-white/60 rounded-2xl p-4 shadow mb-4 flex-1 flex flex-col"
-        style={{ minHeight: 400, maxHeight: "70vh", overflowY: "auto" }}
+        className="w-full max-w-sm bg-white/60 rounded-2xl p-4 shadow mb-4 flex flex-col"
+        style={{
+          minHeight: 250, // Lebih kecil dari sebelumnya
+          maxHeight: "70vh",
+          overflowY: "auto",
+          margin: "0 auto"
+        }}
       >
         <div className="flex-1 flex flex-col gap-2 overflow-y-auto pb-2">
           {messages.map((msg, i) => (
@@ -88,7 +93,7 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
                 `}
                 style={{
                   display: "inline-block",
-                  maxWidth: "80vw",
+                  maxWidth: "85%",
                   width: "fit-content",
                   minWidth: "36px",
                   wordBreak: "break-word",
@@ -131,4 +136,4 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
       </div>
     </div>
   );
-          }
+}

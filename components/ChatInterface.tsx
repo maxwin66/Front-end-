@@ -17,7 +17,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ email, isGuest, credits: 
   const [loading, setLoading] = useState(false);
   const [credits, setCredits] = useState(initialCredits);
 
-  // Ganti dengan fetch bawaan JS agar tanpa install library
+  // Pakai fetch supaya tidak perlu install axios
   const handleSend = async () => {
     if (!input.trim() || credits <= 0) return;
     const question = input.trim();
@@ -50,108 +50,58 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ email, isGuest, credits: 
 
   return (
     <div
+      className="min-h-screen flex items-center justify-center"
       style={{
-        minHeight: "100vh",
-        background: "url('https://user-images.githubusercontent.com/107878113/321337217-6f05d6a6-9e94-4188-8f6f-2c0ef8b8d7b2.jpg') center/cover no-repeat",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "flex-start",
+        background: "url('https://user-images.githubusercontent.com/107878113/321337217-6f05d6a6-9e94-4188-8f6f-2c0ef8b8d7b2.jpg') center/cover no-repeat"
       }}
     >
-      <div
-        style={{
-          marginTop: 48,
-          background: "rgba(255,255,255,0.96)",
-          borderRadius: 16,
-          boxShadow: "0 1px 8px rgba(0,0,0,0.10)",
-          padding: 24,
-          maxWidth: 400,
-          width: "94vw",
-        }}
-      >
-        <div style={{ fontWeight: "bold", color: "#3ca6ff", marginBottom: 8 }}>
+      <div className="bg-white/95 p-6 rounded-2xl shadow-xl max-w-md w-full">
+        <div className="font-bold text-blue-500 mb-1">
           MyKugy - AI Chat Anime
         </div>
-        <div style={{ fontSize: "0.98em", marginBottom: 8 }}>
+        <div className="mb-2">
           {isGuest
-            ? <>Mode Tamu (20 kredit)</>
-            : <>Login sebagai <b>{email}</b> (75 kredit)</>
+            ? <>Mode Tamu <span className="text-sm text-gray-500">(20 kredit)</span></>
+            : <>Login sebagai <b>{email}</b> <span className="text-sm text-gray-500">(75 kredit)</span></>
           }
         </div>
-        <div
-          style={{
-            minHeight: 120,
-            maxHeight: 220,
-            overflowY: "auto",
-            marginBottom: 8,
-            background: "#f4f8ff",
-            borderRadius: 8,
-            padding: 8,
-          }}
-        >
+        <div className="mb-2 min-h-[120px] max-h-[220px] overflow-y-auto bg-blue-50 rounded-lg px-2 py-1">
           {chat.length === 0 && (
-            <div style={{ color: "#999", fontSize: "0.95em" }}>
-              Tanyakan apapun ke AI MyKugy di sini!
-            </div>
+            <div className="text-gray-400">Tanyakan apapun ke AI MyKugy di sini!</div>
           )}
           {chat.map((item, idx) => (
             <div
               key={idx}
-              style={{
-                color: item.role === "user" ? "#222" : "#1d62c8",
-                margin: "8px 0",
-                textAlign: item.role === "user" ? "right" : "left",
-                background: item.role === "user" ? "#e5f3ff" : "#e2fffa",
-                borderRadius: 8,
-                padding: 7,
-                maxWidth: "95%",
-                marginLeft: item.role === "user" ? "auto" : undefined,
-                marginRight: item.role === "ai" ? "auto" : undefined,
-                fontSize: "1em"
-              }}
+              className={item.role === "user" ? "text-right" : "text-left"}
             >
-              <b>{item.role === "user" ? "Kamu" : "AI"}:</b> {item.content}
+              <span className={item.role === "user"
+                ? "inline-block bg-blue-200 rounded-lg px-2 py-1 my-1"
+                : "inline-block bg-green-100 rounded-lg px-2 py-1 my-1"
+              }>
+                <b>{item.role === "user" ? "Kamu" : "AI"}:</b> {item.content}
+              </span>
             </div>
           ))}
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="flex gap-2 mt-2">
           <input
             type="text"
+            className="flex-1 rounded-lg border border-blue-200 px-3 py-2"
             disabled={loading || credits <= 0}
             value={input}
-            placeholder={
-              credits <= 0
-                ? "Kredit habis. Login untuk tambah kredit."
-                : "Tulis pertanyaan kamu..."
-            }
+            placeholder={credits <= 0 ? "Kredit habis" : "Tulis pertanyaan kamu..."}
             onChange={(e) => setInput(e.target.value)}
-            style={{
-              flex: 1,
-              borderRadius: 8,
-              border: "1.5px solid #c1e2f7",
-              padding: "8px 10px"
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSend();
-            }}
+            onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
           />
           <button
+            className="rounded-lg bg-gradient-to-r from-blue-400 to-green-300 text-white font-bold px-5 py-2 disabled:opacity-60"
             disabled={loading || credits <= 0}
             onClick={handleSend}
-            style={{
-              background: "linear-gradient(90deg,#25aae1,#40e495)",
-              color: "#fff",
-              border: "none",
-              borderRadius: 8,
-              padding: "0 22px",
-              fontWeight: "bold"
-            }}
           >
             {loading ? "..." : "Kirim"}
           </button>
         </div>
-        <div style={{ marginTop: 18, fontSize: "0.93em", color: "#888" }}>
+        <div className="mt-2 text-sm text-gray-500">
           Kredit tersisa: <b>{credits}</b>
         </div>
       </div>

@@ -32,6 +32,7 @@ export default function Home() {
     localStorage.removeItem("user_email");
     setEmail(null);
     setReply("");
+    setMsg("");
   };
 
   const sendChat = async () => {
@@ -69,7 +70,7 @@ export default function Home() {
         }}
       >
         <div className="bg-white/80 rounded-xl shadow-xl p-8 flex flex-col items-center max-w-md w-full mx-2 mt-16 mb-16">
-          <h1 className="text-3xl font-bold mb-4 text-sky-500 drop-shadow font-sora text-center">
+          <h1 className="text-3xl font-bold mb-4 text-sky-500 drop-shadow text-center">
             MyKugy - AI Chat Anime
           </h1>
           {!email ? (
@@ -117,10 +118,9 @@ export default function Home() {
           )}
         </div>
         <div className="text-white/70 text-sm mt-2 mb-4 drop-shadow text-center">
-          © 2025 MyKugy. Powered by OpenRouter AI.<br />
-          Tema anime hanya visual.
+          © 2025 MyKugy. Powered by OpenRouter AI. Tema anime hanya visual.
         </div>
       </div>
     </>
   );
-}
+      }

@@ -17,7 +17,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ email, isGuest, credits: 
   const [loading, setLoading] = useState(false);
   const [credits, setCredits] = useState(initialCredits);
 
-  // Pakai fetch supaya tidak perlu install axios
   const handleSend = async () => {
     if (!input.trim() || credits <= 0) return;
     const question = input.trim();

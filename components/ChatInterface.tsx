@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 interface ChatInterfaceProps {
   email: string;
@@ -12,11 +12,25 @@ interface ChatItem {
   content: string;
 }
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ email, isGuest, credits: initialCredits, bgStyle }) => {
+const ChatInterface: React.FC<ChatInterfaceProps> = ({
+  email,
+  isGuest,
+  credits: initialCredits,
+  bgStyle,
+}) => {
   const [input, setInput] = useState("");
   const [chat, setChat] = useState<ChatItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [credits, setCredits] = useState(initialCredits);
+
+  // Ref untuk auto-scroll ke bawah
+  const chatBottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (chatBottomRef.current) {
+      chatBottomRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chat]);
 
   const handleSend = async () => {
     if (!input.trim() || credits <= 0) return;
@@ -53,17 +67,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ email, isGuest, credits: 
       className="min-h-screen flex items-center justify-center"
       style={bgStyle}
     >
-      <div className="bg-white/95 p-6 rounded-2xl shadow-xl max-w-md w-full">
+      <div className="bg-white/95 p-6 rounded-2xl shadow-xl max-w-2xl w-full min-h-[520px]">
         <div className="font-bold text-blue-500 mb-1">
           MyKugy - AI Chat Anime
         </div>
         <div className="mb-2">
           {isGuest
-            ? <>Mode Tamu <span className="text-sm text-gray-500">(20 kredit)</span></>
-            : <>Login sebagai <b>{email}</b> <span className="text-sm text-gray-500">(75 kredit)</span></>
-          }
+            ? (
+              <>Mode Tamu <span className="text-sm text-gray-500">(20 kredit)</span></>
+            )
+            : (
+              <>Login sebagai <b>{email}</b> <span className="text-sm text-gray-500">(75 kredit)</span></>
+            )}
         </div>
-        <div className="mb-2 min-h-[120px] max-h-[220px] overflow-y-auto bg-blue-50 rounded-lg px-2 py-1">
+        <div className="mb-2 min-h-[300px] max-h-[420px] overflow-y-auto bg-blue-50 rounded-lg px-2 py-1">
           {chat.length === 0 && (
             <div className="text-gray-400">Tanyakan apapun ke AI MyKugy di sini!</div>
           )}
@@ -80,6 +97,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ email, isGuest, credits: 
               </span>
             </div>
           ))}
+          <div ref={chatBottomRef} />
         </div>
         <div className="flex gap-2 mt-2">
           <input

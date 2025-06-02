@@ -1,6 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import HomeSelect from "../components/HomeSelect";
 import ChatInterface from "../components/ChatInterface";
+import ParticlesBackground from "../components/ParticlesBackground";
+import ThemeLangSwitcher from "../components/ThemeLangSwitcher";
+import { UiContext } from "./_app";
 
 // Quotes anime inspiratif
 const animeQuotes = [
@@ -13,19 +16,6 @@ const animeQuotes = [
   { text: "Dunia ini kejam, tapi juga sangat indah.", author: "Attack on Titan" },
 ];
 
-const themes = [
-  { name: "Biru Langit", color: "#38bdf8", gradient: "from-blue-400 to-sky-400" },
-  { name: "Ungu", color: "#a78bfa", gradient: "from-purple-400 to-fuchsia-400" },
-  { name: "Pink", color: "#fb7185", gradient: "from-pink-400 to-rose-400" },
-  { name: "Hijau", color: "#34d399", gradient: "from-emerald-400 to-teal-300" },
-];
-
-const languages = [
-  { code: "id", label: "🇮🇩 Indonesia" },
-  { code: "en", label: "🇬🇧 English" },
-  { code: "jp", label: "🇯🇵 日本語" },
-];
-
 const texts = {
   id: {
     start: "Mulai",
@@ -35,13 +25,9 @@ const texts = {
       "💬 Chat AI Karakter Anime 24/7",
       "✨ Privasi Aman & Tampilan Premium"
     ],
-    faq: "FAQ / Info Singkat",
-    close: "Tutup FAQ",
-    join: "Gabung komunitas kami di",
-    or: "atau",
-    developed: "Dikembangkan dengan",
-    by: "oleh",
     version: "Versi",
+    developed: "Dikembangkan dengan",
+    by: "oleh"
   },
   en: {
     start: "Start",
@@ -51,13 +37,9 @@ const texts = {
       "💬 Chat with Anime AI 24/7",
       "✨ Secure Privacy & Premium Appearance"
     ],
-    faq: "FAQ / Quick Info",
-    close: "Close FAQ",
-    join: "Join our community on",
-    or: "or",
-    developed: "Developed with",
-    by: "by",
     version: "Version",
+    developed: "Developed with",
+    by: "by"
   },
   jp: {
     start: "スタート",
@@ -67,13 +49,9 @@ const texts = {
       "💬 24時間アニメAIチャット",
       "✨ 安全なプライバシー＆プレミアムデザイン"
     ],
-    faq: "よくある質問 / クイック情報",
-    close: "FAQを閉じる",
-    join: "コミュニティに参加",
-    or: "または",
-    developed: "開発：",
-    by: "",
     version: "バージョン",
+    developed: "開発：",
+    by: ""
   }
 };
 
@@ -92,17 +70,17 @@ const IndexPage = () => {
   const [email, setEmail] = useState("");
   const [featureIdx, setFeatureIdx] = useState(0);
   const [carouselProg, setCarouselProg] = useState(0);
-  const [darkMode, setDarkMode] = useState(false);
-  const [theme, setTheme] = useState(themes[0]);
-  const [lang, setLang] = useState<"id" | "en" | "jp">("id");
   const [blurTrans, setBlurTrans] = useState(false);
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
+  const [quoteIdx, setQuoteIdx] = useState(Math.floor(Math.random() * animeQuotes.length));
 
-  // Parallax background effect
+  // Global UI state
+  const { theme, darkMode, lang } = useContext(UiContext);
+
+  // Parallax background effect (mouse move)
   useEffect(() => {
     if (step !== "start") return;
     const listener = (e: MouseEvent) => {
-      // Koordinat -1..1
       const x = (e.clientX / window.innerWidth - 0.5) * 2;
       const y = (e.clientY / window.innerHeight - 0.5) * 2;
       setParallax({ x: x * 12, y: y * 8 });
@@ -128,6 +106,15 @@ const IndexPage = () => {
     }
   }, [step, lang]);
 
+  // Pergantian quote anime (tiap 10 detik)
+  useEffect(() => {
+    if (step !== "start") return;
+    const interval = setInterval(() => {
+      setQuoteIdx(prev => (prev + 1) % animeQuotes.length);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [step]);
+
   useEffect(() => {
     if (typeof window !== "undefined" && step === "start") {
       const params = new URLSearchParams(window.location.search);
@@ -150,17 +137,14 @@ const IndexPage = () => {
     }, 450);
   };
 
-  // Random quote anime
-  const randQuote = animeQuotes[Math.floor(Math.random() * animeQuotes.length)];
-
-  // Custom cursor effect
+  // Custom cursor effect (hanya di halaman depan)
   useEffect(() => {
     if (step !== "start") return;
     document.body.style.cursor = "url('/star-cursor.png'), auto";
     return () => { document.body.style.cursor = "auto"; };
   }, [step]);
 
-  // --- HALAMAN DEPAN PREMIUM ---
+  // --- HALAMAN DEPAN ---
   if (step === "start") {
     return (
       <div
@@ -171,36 +155,11 @@ const IndexPage = () => {
             : { ...animeBg, backgroundPosition: `${50 + parallax.x}% ${50 + parallax.y}%` }
         }
       >
-        {/* Theme & Language Switcher */}
-        <div className="absolute top-5 left-5 z-20 flex gap-2">
-          {/* Pilihan theme color */}
-          <select
-            className="rounded px-2 py-1 bg-white/60 text-blue-900 font-bold shadow"
-            value={theme.name}
-            onChange={e => setTheme(themes.find(t => t.name === e.target.value) || themes[0])}
-          >
-            {themes.map(t => <option value={t.name} key={t.name}>{t.name}</option>)}
-          </select>
-          {/* Pilihan bahasa */}
-          <select
-            className="rounded px-2 py-1 bg-white/60 text-blue-900 font-bold shadow"
-            value={lang}
-            onChange={e => setLang(e.target.value as any)}
-          >
-            {languages.map(l => <option value={l.code} key={l.code}>{l.label}</option>)}
-          </select>
-        </div>
+        {/* Partikel hanya di halaman start */}
+        <ParticlesBackground darkMode={darkMode} />
+        <ThemeLangSwitcher />
 
-        {/* Toggle Dark Mode */}
-        <button
-          className="absolute top-5 right-5 z-20 bg-white/30 hover:bg-white/60 p-2 rounded-full shadow transition"
-          onClick={() => setDarkMode(d => !d)}
-          title={darkMode ? "Light Mode" : "Dark Mode"}
-        >
-          {darkMode ? "☀️" : "🌙"}
-        </button>
-
-        {/* Badge Beta */}
+        {/* Beta badge */}
         <div className="absolute left-1/2 transform -translate-x-1/2 top-8 z-10">
           <span className={`bg-gradient-to-r ${theme.gradient} text-white text-xs font-bold px-3 py-1 rounded-full shadow`}>Beta</span>
         </div>
@@ -240,7 +199,6 @@ const IndexPage = () => {
             >
               {texts[lang].start}
             </button>
-            {/* Transisi Blur */}
             {blurTrans && <div className="absolute inset-0 bg-white/60 backdrop-blur-md rounded-3xl transition-all duration-300" />}
             <style>{`
               .animate-glow {
@@ -254,8 +212,8 @@ const IndexPage = () => {
 
             {/* Quote Anime */}
             <div className="mt-7 mb-2 w-full flex flex-col items-center">
-              <div className="text-xs italic text-blue-900 text-center max-w-xs">
-                “{randQuote.text}” <span className="not-italic font-bold text-blue-600">- {randQuote.author}</span>
+              <div className="text-xs italic text-blue-900 text-center max-w-xs transition-all duration-500">
+                “{animeQuotes[quoteIdx].text}” <span className="not-italic font-bold text-blue-600">- {animeQuotes[quoteIdx].author}</span>
               </div>
             </div>
           </div>
@@ -281,32 +239,40 @@ const IndexPage = () => {
     );
   }
 
-  // --- HALAMAN BERIKUTNYA (tidak diubah) ---
+  // --- HALAMAN SELECT (partikel tetap tampil) ---
   if (step === "select") {
     return (
-      <HomeSelect
-        onGoogle={() => {
-          if (typeof window !== "undefined") {
-            window.location.href = "https://backend-cb98.onrender.com/auth/google";
-          }
-        }}
-        onGuest={() => {
-          setStep("guest");
-          setCredits(20);
-          setEmail("");
-        }}
-        bgStyle={darkMode ? darkBg : animeBg}
-      />
+      <>
+        <ParticlesBackground darkMode={darkMode} />
+        <ThemeLangSwitcher />
+        <HomeSelect
+          onGoogle={() => {
+            if (typeof window !== "undefined") {
+              window.location.href = "https://backend-cb98.onrender.com/auth/google";
+            }
+          }}
+          onGuest={() => {
+            setStep("guest");
+            setCredits(20);
+            setEmail("");
+          }}
+          bgStyle={darkMode ? darkBg : animeBg}
+        />
+      </>
     );
   }
 
+  // --- HALAMAN CHAT (TANPA partikel, tapi theme/darkmode/lang tetap) ---
   return (
-    <ChatInterface
-      email={email}
-      isGuest={step === "guest"}
-      credits={credits}
-      bgStyle={darkMode ? darkBg : animeBg}
-    />
+    <>
+      <ThemeLangSwitcher />
+      <ChatInterface
+        email={email}
+        isGuest={step === "guest"}
+        credits={credits}
+        bgStyle={darkMode ? darkBg : animeBg}
+      />
+    </>
   );
 };
 

@@ -4,6 +4,7 @@ interface ChatInterfaceProps {
   email: string;
   isGuest: boolean;
   credits: number;
+  bgStyle?: React.CSSProperties;
 }
 
 interface ChatItem {
@@ -11,7 +12,7 @@ interface ChatItem {
   content: string;
 }
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ email, isGuest, credits: initialCredits }) => {
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ email, isGuest, credits: initialCredits, bgStyle }) => {
   const [input, setInput] = useState("");
   const [chat, setChat] = useState<ChatItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -25,7 +26,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ email, isGuest, credits: 
     setLoading(true);
 
     try {
-      const res = await fetch("https://backend-bpup.onrender.com/api/chat", {
+      const res = await fetch("https://backend-cb98.onrender.com/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -50,9 +51,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ email, isGuest, credits: 
   return (
     <div
       className="min-h-screen flex items-center justify-center"
-      style={{
-        background: "url('https://user-images.githubusercontent.com/107878113/321337217-6f05d6a6-9e94-4188-8f6f-2c0ef8b8d7b2.jpg') center/cover no-repeat"
-      }}
+      style={bgStyle}
     >
       <div className="bg-white/95 p-6 rounded-2xl shadow-xl max-w-md w-full">
         <div className="font-bold text-blue-500 mb-1">

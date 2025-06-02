@@ -1,7 +1,7 @@
 import { useState, createContext } from "react";
 import "../styles/globals.css";
 
-// Theme/Language context agar bisa diakses semua halaman & komponen
+// Context supaya theme, darkMode, lang bisa diakses semua halaman
 export const UiContext = createContext({
   theme: { name: "Biru Langit", color: "#38bdf8", gradient: "from-blue-400 to-sky-400" },
   setTheme: (_: any) => {},

@@ -72,7 +72,7 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
       <div
         className="w-full max-w-sm bg-white/60 rounded-2xl p-4 shadow mb-4 flex flex-col"
         style={{
-          minHeight: 250, // Lebih kecil dari sebelumnya
+          minHeight: 250,
           maxHeight: "70vh",
           overflowY: "auto",
           margin: "0 auto"
@@ -130,10 +130,27 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
               : lang === "id" ? "Kirim" : lang === "en" ? "Send" : "送信"}
           </button>
         </div>
-      </div>
-      <div className="text-xs text-blue-900/70 mb-2">
-        {isGuest ? "Mode Tamu" : email} | Kredit: {credits}
+        {/* Badge email/guest & kredit */}
+        <div className="flex flex-col items-center mt-5 mb-1">
+          {email && !isGuest && (
+            <span className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-500 text-white font-semibold text-xs shadow-lg border border-white/30 select-text mb-1"
+              style={{ letterSpacing: "0.5px", boxShadow: "0 2px 8px #1e3a8a50" }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" className="inline mr-1" viewBox="0 0 24 24"><path fill="currentColor" d="M2 6a2 2 0 012-2h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm2 0v.511l8 6.222 8-6.222V6H4zm16 2.489l-7.445 5.792a2 2 0 01-2.11 0L4 8.489V18h16V8.489z"/></svg>
+              {email}
+            </span>
+          )}
+          {isGuest && (
+            <span className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-gradient-to-r from-gray-500 via-gray-700 to-gray-900 text-white font-semibold text-xs shadow-lg border border-white/20 mb-1"
+              style={{ letterSpacing: "0.5px", boxShadow: "0 2px 8px #4446" }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" className="inline mr-1" viewBox="0 0 24 24"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+              Guest Mode
+            </span>
+          )}
+          <span className="inline-block mt-1 px-3 py-1 rounded-xl bg-gradient-to-r from-pink-500 to-yellow-400 text-white text-xs font-semibold shadow-sm">
+            Kredit: {credits}
+          </span>
+        </div>
       </div>
     </div>
   );
-}
+        }

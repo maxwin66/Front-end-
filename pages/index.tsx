@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext } from "react";
+import { useRouter } from "next/router";
 import HomeSelect from "../components/HomeSelect";
 import ChatInterface from "../components/ChatInterface";
 import ParticlesBackground from "../components/ParticlesBackground";
@@ -65,6 +66,7 @@ const darkBg = {
 };
 
 const IndexPage = () => {
+  const router = useRouter();
   const [step, setStep] = useState<"start" | "select" | "guest" | "login">("start");
   const [credits, setCredits] = useState(0);
   const [email, setEmail] = useState("");
@@ -249,12 +251,11 @@ const IndexPage = () => {
           onGoogle={() => {
             if (typeof window !== "undefined") {
               window.location.href = "https://backend-cb98.onrender.com/auth/google";
+              // PENTING: Setelah login sukses, backend HARUS redirect ke /menu
             }
           }}
           onGuest={() => {
-            setStep("guest");
-            setCredits(20);
-            setEmail("");
+            router.push("/menu");
           }}
           bgStyle={darkMode ? darkBg : animeBg}
         />

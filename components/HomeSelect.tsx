@@ -3,19 +3,16 @@ import { useRouter } from "next/router";
 
 interface Props {
   onGoogle?: () => void;
-  onGuest?: () => void;
   bgStyle?: React.CSSProperties;
 }
 
-const HomeSelect: React.FC<Props> = ({ onGoogle, onGuest, bgStyle }) => {
+const HomeSelect: React.FC<Props> = ({ onGoogle, bgStyle }) => {
   const router = useRouter();
 
   const handleGuest = () => {
-    if (onGuest) {
-      onGuest();
-    } else {
-      router.push("/?openchat=1");
-    }
+    // Debug log untuk memastikan fungsi terpanggil
+    console.log("Guest button clicked!");
+    router.push("/?openchat=1");
   };
 
   return (
@@ -25,7 +22,9 @@ const HomeSelect: React.FC<Props> = ({ onGoogle, onGuest, bgStyle }) => {
     >
       <div className="bg-white/80 rounded-3xl shadow-2xl px-8 py-10 w-full max-w-md mx-4 border border-blue-200 flex flex-col items-center relative">
         <div className="absolute -top-8 left-1/2 -translate-x-1/2">
-          <span className="bg-gradient-to-r from-blue-400 to-purple-400 text-white font-bold px-4 py-1 rounded-full shadow text-xs tracking-wider">MyKugy Beta</span>
+          <span className="bg-gradient-to-r from-blue-400 to-purple-400 text-white font-bold px-4 py-1 rounded-full shadow text-xs tracking-wider">
+            MyKugy Beta
+          </span>
         </div>
 
         <h1 className="text-3xl font-extrabold text-center mb-3 text-blue-700 drop-shadow-lg tracking-wide">
@@ -73,7 +72,10 @@ const HomeSelect: React.FC<Props> = ({ onGoogle, onGuest, bgStyle }) => {
 
         {/* Quotes & info */}
         <div className="mt-8 text-center text-sm text-gray-400">
-          <span className="block mb-1 italic">“Impian itu bukan untuk dikejar, tapi untuk diwujudkan.” <span className="not-italic font-bold text-blue-500">- One Piece</span></span>
+          <span className="block mb-1 italic">
+            “Impian itu bukan untuk dikejar, tapi untuk diwujudkan.”{" "}
+            <span className="not-italic font-bold text-blue-500">- One Piece</span>
+          </span>
           <span className="block">Kredit gratis untuk pengguna baru! 🚀</span>
         </div>
       </div>

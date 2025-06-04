@@ -14,7 +14,7 @@ const darkBg = {
 
 const ChatPage = () => {
   const [email, setEmail] = useState("");
-  const [credits, setCredits] = useState(75);
+  const [credits, setCredits] = useState(0); // Set initial credits to 0
   const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
@@ -22,12 +22,15 @@ const ChatPage = () => {
       const params = new URLSearchParams(window.location.search);
       const gotEmail = params.get("email");
       const guest = params.get("guest");
+      
       if (gotEmail) {
         setEmail(gotEmail);
         setIsGuest(false);
+        setCredits(75); // Set 75 credits for email login
       } else if (guest === "1") {
         setIsGuest(true);
         setEmail("");
+        setCredits(20); // Set 20 credits for guest mode
       }
     }
   }, []);

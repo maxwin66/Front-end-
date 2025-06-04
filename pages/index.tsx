@@ -79,7 +79,7 @@ const IndexPage = () => {
   // Global UI state
   const { theme, darkMode, lang } = useContext(UiContext);
 
-  // Tambahan: Biar dari menu bisa langsung masuk chat AI
+  // Jika dari menu, langsung masuk chat AI (tanpa landing page)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -272,7 +272,6 @@ const IndexPage = () => {
           onGoogle={() => {
             if (typeof window !== "undefined") {
               window.location.href = "https://backend-cb98.onrender.com/auth/google";
-              // PENTING: Setelah login sukses, backend HARUS redirect ke /menu
             }
           }}
           onGuest={() => {

@@ -8,11 +8,13 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
     { from: "ai", text: lang === "id" ? "Halo! Ada yang bisa aku bantu?" : lang === "en" ? "Hello! How can I help you?" : "こんにちは！どうしたの？" }
   ]);
   const [loading, setLoading] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);      
 
   // Kredit handling
-  const [userCredits, setUserCredits] = useState(credits);
-  useEffect(() => { setUserCredits(credits); }, [credits]);
+  const [userCredits, setUserCredits] = useState(isGuest ? 20 : credits);
+  useEffect(() => { 
+    setUserCredits(isGuest ? 20 : credits); 
+  }, [credits, isGuest]);
 
   // --- Guest ID persist ---
   const [guestId, setGuestId] = useState("");
@@ -37,7 +39,7 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
     setMessages(prev => [...prev, userMsg]);
     setValue("");
     setLoading(true);
-    setUserCredits(cr => cr - 1);
+    setUserCredits(cr => Math.max(0, cr - 1)); // Pastikan tidak negatif
 
     let user_email = email && email.trim() !== "" ? email : guestId;
     console.log("handleSend user_email:", user_email, "isGuest:", isGuest, "email:", email, "guestId:", guestId);
@@ -52,7 +54,9 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
           model_select: "x-ai/grok-3-mini-beta"
         })
       });
-      if (!res.ok) throw new Error("API error " + res.status);
+      if (!res.ok) {
+        throw new Error("API error " + res.status);
+      }
       const data = await res.json();
       setMessages(prev => [
         ...prev,
@@ -63,6 +67,7 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
         ...prev,
         { from: "ai", text: "Maaf, terjadi error koneksi ke server. Coba lagi nanti." }
       ]);
+      setUserCredits(cr => cr + 1); // Kembalikan kredit jika terjadi error
     }
     setLoading(false);
   };
@@ -169,4 +174,4 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
       </div>
     </div>
   );
-                  }
+                }

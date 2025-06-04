@@ -84,12 +84,62 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
       className="min-h-screen flex flex-col items-center"
       style={bgStyle}
     >
-      <div
-        className="text-xl font-bold text-center my-4"
-        style={{ color: theme.color }}
-      >
-        MyKugy Ai Chat Anime
+      {/* Logo dan Judul */}
+      <div className="flex flex-col items-center mb-4">
+        <div className="w-20 h-20 mb-2">
+          <svg viewBox="0 0 24 24" className="w-full h-full drop-shadow-lg">
+            <defs>
+              <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: '#4f46e5' }} />
+                <stop offset="100%" style={{ stopColor: '#7c3aed' }} />
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+            {/* Background circle */}
+            <circle cx="12" cy="12" r="11" fill="url(#logoGradient)" />
+            
+            {/* Anime robot face */}
+            <g filter="url(#glow)">
+              {/* Eyes */}
+              <circle cx="8" cy="10" r="1.8" fill="white" />
+              <circle cx="16" cy="10" r="1.8" fill="white" />
+              <circle cx="8" cy="10" r="0.8" fill="#4f46e5" />
+              <circle cx="16" cy="10" r="0.8" fill="#4f46e5" />
+              
+              {/* Smile */}
+              <path
+                d="M8 14.5 C10 17, 14 17, 16 14.5"
+                stroke="white"
+                strokeWidth="1.5"
+                fill="none"
+                strokeLinecap="round"
+              />
+              
+              {/* Antenna */}
+              <path
+                d="M12 4 L12 7"
+                stroke="white"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+              <circle cx="12" cy="3" r="1" fill="white" />
+            </g>
+          </svg>
+        </div>
+        <div
+          className="text-xl font-bold text-center"
+          style={{ color: theme.color }}
+        >
+          MyKugy AI Chat
+        </div>
       </div>
+
       <div
         className="w-full max-w-sm bg-white/60 rounded-2xl p-4 shadow mb-4 flex flex-col"
         style={{
@@ -174,4 +224,4 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
       </div>
     </div>
   );
-                }
+            }

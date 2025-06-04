@@ -14,7 +14,7 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
   const [userCredits, setUserCredits] = useState(credits);
   useEffect(() => { setUserCredits(credits); }, [credits]);
 
-  // --- FIXED: GUEST ID HANDLING (persist in sessionStorage) ---
+  // --- Guest ID persist ---
   const [guestId, setGuestId] = useState("");
   useEffect(() => {
     if (isGuest) {
@@ -32,15 +32,15 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
   }, [messages]);
 
   const handleSend = async () => {
-    if (!value.trim() || loading || userCredits <= 0) return;
+    if (!value.trim() || loading || userCredits <= 0 || (isGuest && !guestId)) return;
     const userMsg = { from: "user", text: value };
     setMessages(prev => [...prev, userMsg]);
     setValue("");
     setLoading(true);
     setUserCredits(cr => cr - 1);
 
-    // Pakai email jika login, pakai guestId jika guest
     let user_email = email && email.trim() !== "" ? email : guestId;
+    console.log("handleSend user_email:", user_email, "isGuest:", isGuest, "email:", email, "guestId:", guestId);
 
     try {
       const res = await fetch("https://backend-cb98.onrender.com/api/chat", {
@@ -132,14 +132,14 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
             className="flex-1 rounded-full px-4 py-2 border"
             placeholder={lang === "id" ? "Ketik pesan..." : lang === "en" ? "Type a message..." : "メッセージを入力..."}
             onKeyDown={handleKeyDown}
-            disabled={loading || userCredits <= 0}
+            disabled={loading || userCredits <= 0 || (isGuest && !guestId)}
             autoFocus
           />
           <button
             className={`px-6 py-2 rounded-full font-bold bg-gradient-to-r ${theme.gradient} text-white shadow transition`}
             onClick={handleSend}
             style={{ letterSpacing: '1px' }}
-            disabled={loading || !value.trim() || userCredits <= 0}
+            disabled={loading || !value.trim() || userCredits <= 0 || (isGuest && !guestId)}
           >
             {loading
               ? (lang === "id" ? "..." : lang === "en" ? "..." : "...")

@@ -10,7 +10,7 @@ const HomeSelect: React.FC<Props> = ({ onGoogle, bgStyle }) => {
   const router = useRouter();
 
   const handleGuest = () => {
-    // Debug log untuk memastikan fungsi terpanggil
+    // Debug log (opsional, bisa dihapus setelah yakin jalan)
     console.log("Guest button clicked!");
     router.push("/?openchat=1");
   };

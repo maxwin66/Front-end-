@@ -10,19 +10,36 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // --- KREDIT & GUEST ID HANDLING ---
+  const [userCredits, setUserCredits] = useState(credits);
+  useEffect(() => {
+    setUserCredits(credits);
+  }, [credits]);
+  const [guestId, setGuestId] = useState("");
+  useEffect(() => {
+    if (isGuest) {
+      let gid = sessionStorage.getItem("guest_id");
+      if (!gid) {
+        gid = "guest-" + Math.random().toString(36).slice(2, 10);
+        sessionStorage.setItem("guest_id", gid);
+      }
+      setGuestId(gid);
+    }
+  }, [isGuest]);
+
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const handleSend = async () => {
-    if (!value.trim() || loading) return;
+    if (!value.trim() || loading || userCredits <= 0) return;
     const userMsg = { from: "user", text: value };
     setMessages(prev => [...prev, userMsg]);
     setValue("");
     setLoading(true);
+    setUserCredits(cr => cr - 1);
 
-    // Pastikan guest juga dapat user_email unik
-    let user_email = email && email.trim() !== "" ? email : `guest-${Math.random().toString(36).slice(2, 10)}`;
+    let user_email = email && email.trim() !== "" ? email : guestId;
 
     try {
       const res = await fetch("https://backend-cb98.onrender.com/api/chat", {
@@ -116,14 +133,14 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
             className="flex-1 rounded-full px-4 py-2 border"
             placeholder={lang === "id" ? "Ketik pesan..." : lang === "en" ? "Type a message..." : "メッセージを入力..."}
             onKeyDown={handleKeyDown}
-            disabled={loading}
+            disabled={loading || userCredits <= 0}
             autoFocus
           />
           <button
             className={`px-6 py-2 rounded-full font-bold bg-gradient-to-r ${theme.gradient} text-white shadow transition`}
             onClick={handleSend}
             style={{ letterSpacing: '1px' }}
-            disabled={loading || !value.trim()}
+            disabled={loading || !value.trim() || userCredits <= 0}
           >
             {loading
               ? (lang === "id" ? "..." : lang === "en" ? "..." : "...")
@@ -147,10 +164,10 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
             </span>
           )}
           <span className="inline-block mt-1 px-3 py-1 rounded-xl bg-gradient-to-r from-pink-500 to-yellow-400 text-white text-xs font-semibold shadow-sm">
-            Kredit: {credits}
+            Kredit: {userCredits}
           </span>
         </div>
       </div>
     </div>
   );
-        }
+             }

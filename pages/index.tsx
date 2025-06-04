@@ -79,13 +79,12 @@ const IndexPage = () => {
   // Global UI state
   const { theme, darkMode, lang } = useContext(UiContext);
 
-  // --- MODIFIKASI: Pastikan mode guest TIDAK dapat kredit 75 walau ada email guest ---
+  // Gabungkan semua logic guest/login dalam satu useEffect:
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const openchat = params.get("openchat");
       const gotEmail = params.get("email");
-      // MODIF: Jika email mengandung "guest", tetap dianggap guest!
       const isGuestEmail = gotEmail && gotEmail.toLowerCase().startsWith("guest");
       if (openchat === "1") {
         if (gotEmail && !isGuestEmail) {
@@ -98,9 +97,19 @@ const IndexPage = () => {
           setEmail(isGuestEmail ? gotEmail : "");
         }
         window.history.replaceState({}, document.title, "/");
+      } else if (gotEmail && !isGuestEmail) {
+        setEmail(gotEmail);
+        setStep("login");
+        setCredits(75);
+        window.history.replaceState({}, document.title, "/");
+      } else if (gotEmail && isGuestEmail) {
+        setStep("guest");
+        setCredits(20);
+        setEmail(gotEmail);
+        window.history.replaceState({}, document.title, "/");
       }
     }
-  }, []);
+  }, []); // hanya sekali saat mount
 
   // Parallax background effect (mouse move)
   useEffect(() => {
@@ -138,25 +147,6 @@ const IndexPage = () => {
       setQuoteIdx(prev => (prev + 1) % animeQuotes.length);
     }, 10000);
     return () => clearInterval(interval);
-  }, [step]);
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && step === "start") {
-      const params = new URLSearchParams(window.location.search);
-      const gotEmail = params.get("email");
-      const isGuestEmail = gotEmail && gotEmail.toLowerCase().startsWith("guest");
-      if (gotEmail && !isGuestEmail) {
-        setEmail(gotEmail);
-        setStep("login");
-        setCredits(75);
-        window.history.replaceState({}, document.title, "/");
-      } else if (gotEmail && isGuestEmail) {
-        setStep("guest");
-        setCredits(20);
-        setEmail(gotEmail);
-        window.history.replaceState({}, document.title, "/");
-      }
-    }
   }, [step]);
 
   // Cinematic Transisi

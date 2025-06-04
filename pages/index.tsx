@@ -282,9 +282,6 @@ const IndexPage = () => {
               window.location.href = "https://backend-cb98.onrender.com/auth/google";
             }
           }}
-          onGuest={() => {
-            router.push("/?openchat=1"); // pastikan tanpa email!
-          }}
           bgStyle={darkMode ? darkBg : animeBg}
         />
       </>

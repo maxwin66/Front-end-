@@ -33,10 +33,33 @@ const HomeSelect: React.FC<Props> = ({ onGoogle, onGuest, bgStyle }) => (
       <button
         className="w-full py-3 rounded-lg font-semibold border-2 border-purple-400 text-purple-600 text-lg hover:bg-purple-50 transition shadow"
         onClick={onGuest}
+        data-testid="guest-button"
       >
         Mulai Sebagai Tamu
       </button>
 
+      {/* Penjelasan kredit */}
+      <div className="mt-7 w-full">
+        <div className="flex items-center justify-center gap-2 text-xs text-blue-700/80 font-semibold mb-1">
+          <svg width="20" height="20" fill="none" className="inline" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" fill="#a21caf" />
+            <text x="12" y="16" textAnchor="middle" fontSize="13" fill="#fff" fontWeight="bold">G</text>
+          </svg>
+          <span>
+            Login Google: <span className="font-bold text-purple-700">75 Kredit</span>
+          </span>
+          <span className="mx-1">|</span>
+          <svg width="20" height="20" fill="none" className="inline" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" fill="#64748b" />
+            <text x="12" y="16" textAnchor="middle" fontSize="13" fill="#fff" fontWeight="bold">T</text>
+          </svg>
+          <span>
+            Tamu: <span className="font-bold text-gray-700">20 Kredit</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Quotes & info */}
       <div className="mt-8 text-center text-sm text-gray-400">
         <span className="block mb-1 italic">“Impian itu bukan untuk dikejar, tapi untuk diwujudkan.” <span className="not-italic font-bold text-blue-500">- One Piece</span></span>
         <span className="block">Kredit gratis untuk pengguna baru! 🚀</span>

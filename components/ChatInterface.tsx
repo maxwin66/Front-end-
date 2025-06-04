@@ -10,11 +10,11 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // --- KREDIT & GUEST ID HANDLING ---
+  // Kredit handling
   const [userCredits, setUserCredits] = useState(credits);
-  useEffect(() => {
-    setUserCredits(credits);
-  }, [credits]);
+  useEffect(() => { setUserCredits(credits); }, [credits]);
+
+  // --- FIXED: GUEST ID HANDLING (persist in sessionStorage) ---
   const [guestId, setGuestId] = useState("");
   useEffect(() => {
     if (isGuest) {
@@ -39,6 +39,7 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
     setLoading(true);
     setUserCredits(cr => cr - 1);
 
+    // Pakai email jika login, pakai guestId jika guest
     let user_email = email && email.trim() !== "" ? email : guestId;
 
     try {
@@ -51,9 +52,7 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
           model_select: "x-ai/grok-3-mini-beta"
         })
       });
-      if (!res.ok) {
-        throw new Error("API error " + res.status);
-      }
+      if (!res.ok) throw new Error("API error " + res.status);
       const data = await res.json();
       setMessages(prev => [
         ...prev,
@@ -170,4 +169,4 @@ export default function ChatInterface({ email, isGuest, credits, bgStyle }: any)
       </div>
     </div>
   );
-             }
+                  }

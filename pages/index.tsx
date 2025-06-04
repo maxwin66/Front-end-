@@ -79,6 +79,27 @@ const IndexPage = () => {
   // Global UI state
   const { theme, darkMode, lang } = useContext(UiContext);
 
+  // Tambahan: Biar dari menu bisa langsung masuk chat AI
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const openchat = params.get("openchat");
+      const gotEmail = params.get("email");
+      if (openchat === "1") {
+        if (gotEmail) {
+          setEmail(gotEmail);
+          setStep("login");
+          setCredits(75);
+        } else {
+          setStep("guest");
+          setCredits(20);
+          setEmail("");
+        }
+        window.history.replaceState({}, document.title, "/");
+      }
+    }
+  }, []);
+
   // Parallax background effect (mouse move)
   useEffect(() => {
     if (step !== "start") return;

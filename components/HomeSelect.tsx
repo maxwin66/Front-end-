@@ -9,19 +9,34 @@ interface Props {
 const HomeSelect: React.FC<Props> = ({ onGoogle, bgStyle }) => {
   const router = useRouter();
 
-  // DEBUG LOG
-  console.log("Render HomeSelect COMPONENT");
-
   return (
-    <div style={bgStyle}>
-      <button onClick={() => { console.log("Google btn"); onGoogle && onGoogle(); }}>Google</button>
+    <div style={{ padding: 24, ...bgStyle }}>
       <button
-        id="guest-btn"
-        style={{ background: "yellow", color: "black", fontWeight: "bold", marginLeft: 20 }}
-        onClick={() => {
-          console.log("Guest button clicked!");
-          router.push("/?openchat=1");
+        style={{
+          background: "#4285F4",
+          color: "white",
+          fontWeight: "bold",
+          padding: "12px 24px",
+          borderRadius: 8,
+          marginRight: 12,
+          border: "none",
+          fontSize: 16,
         }}
+        onClick={onGoogle}
+      >
+        Google
+      </button>
+      <button
+        style={{
+          background: "yellow",
+          color: "#222",
+          fontWeight: "bold",
+          padding: "12px 24px",
+          borderRadius: 8,
+          border: "2px solid #ffd700",
+          fontSize: 16,
+        }}
+        onClick={() => router.push("/?openchat=1")}
       >
         Guest
       </button>

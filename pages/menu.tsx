@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import ThemeLangSwitcher from "../components/ThemeLangSwitcher";
 import { UiContext } from "./_app";
@@ -15,11 +15,37 @@ const darkBg = {
 const MenuPage: React.FC = () => {
   const router = useRouter();
   const { theme, darkMode } = useContext(UiContext);
+  const [email, setEmail] = useState("");
+  const [isGuest, setIsGuest] = useState(false);
+
+  useEffect(() => {
+    // Ambil email dari query jika ada (login google), guest dari query juga
+    const params = new URLSearchParams(window.location.search);
+    const gotEmail = params.get("email");
+    const guest = params.get("guest");
+    if (gotEmail) {
+      setEmail(gotEmail);
+      setIsGuest(false);
+    } else if (guest === "1") {
+      setIsGuest(true);
+      setEmail("");
+    }
+  }, []);
 
   function handleComingSoon(feature: string) {
     window.alert(
       `Fitur "${feature}" akan segera hadir di MyKugy! Nantikan update berikutnya ya!`
     );
+  }
+
+  function handleChatClick() {
+    if (email) {
+      router.push(`/chat?email=${encodeURIComponent(email)}`);
+    } else if (isGuest) {
+      router.push(`/chat?guest=1`);
+    } else {
+      router.push("/chat");
+    }
   }
 
   return (
@@ -48,7 +74,7 @@ const MenuPage: React.FC = () => {
         </h1>
         <button
           className={`w-full mb-4 py-4 rounded-2xl font-bold text-white text-lg bg-gradient-to-r ${theme.gradient} shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-200 outline-none`}
-          onClick={() => router.push("/")}
+          onClick={handleChatClick}
         >
           Ngobrol Bareng AI
         </button>

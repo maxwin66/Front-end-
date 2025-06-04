@@ -16,10 +16,9 @@ const MenuPage: React.FC = () => {
   const router = useRouter();
   const { theme, darkMode } = useContext(UiContext);
 
-  // Handler untuk fitur yang belum tersedia
   function handleComingSoon(feature: string) {
     window.alert(
-      `Fitur "${feature}" akan segera hadir di MyKugy! Nantikan update seru berikutnya ya!`
+      `Fitur "${feature}" akan segera hadir di MyKugy! Nantikan update berikutnya ya!`
     );
   }
 

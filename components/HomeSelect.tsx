@@ -1,5 +1,6 @@
 import React from "react";
 import { useRouter } from "next/router";
+import Image from "next/image"; // Tambahkan import Image dari Next.js
 
 interface Props {
   onGoogle?: () => void;
@@ -35,11 +36,13 @@ const HomeSelect: React.FC<Props> = ({ onGoogle }) => {
           </div>
 
           {/* Logo */}
-          <div className="w-24 h-24 mb-4">
-            <img
-              src="/logo.png" // Pindahkan logo ke folder public
+          <div className="w-32 h-32 mb-4 relative"> {/* Sesuaikan ukuran jika perlu */}
+            <Image
+              src="/logo.png"
               alt="MyKugy Logo"
-              className="w-full h-full object-contain"
+              layout="fill"
+              objectFit="contain"
+              priority
             />
           </div>
 

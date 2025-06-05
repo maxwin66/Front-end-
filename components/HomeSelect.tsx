@@ -42,9 +42,11 @@ const HomeSelect: React.FC<Props> = ({ onGoogle }) => {
 
   return (
     <div 
-      className={`min-h-screen w-full ${theme === "dark" ? "bg-gray-900" : ""}`}
+      className="min-h-screen w-full"
       style={{
-        backgroundImage: "url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png')",
+        backgroundImage: theme === "dark" 
+          ? "linear-gradient(135deg,#0f172a 40%,#172554 100%)"
+          : "url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat"
@@ -54,19 +56,9 @@ const HomeSelect: React.FC<Props> = ({ onGoogle }) => {
       <div className="fixed top-4 left-4 flex gap-2 z-10">
         <button 
           onClick={toggleTheme}
-          className="px-3 py-1 rounded-md bg-white/80 backdrop-blur-sm text-blue-900 text-sm font-medium hover:bg-white/90 transition flex items-center gap-2"
+          className="px-3 py-1 rounded-md bg-white/80 backdrop-blur-sm text-blue-900 text-sm font-medium hover:bg-white/90 transition"
         >
-          {theme === "light" ? (
-            <>
-              <span role="img" aria-label="Light Mode">🌤️</span>
-              Biru Langit
-            </>
-          ) : (
-            <>
-              <span role="img" aria-label="Dark Mode">🌙</span>
-              Mode Gelap
-            </>
-          )}
+          {theme === "light" ? "Biru Langit" : "Mode Gelap"}
         </button>
 
         {/* Language Dropdown */}
@@ -103,7 +95,12 @@ const HomeSelect: React.FC<Props> = ({ onGoogle }) => {
 
       {/* Center Card */}
       <div className="h-screen flex items-center justify-center px-4">
-        <div className="bg-white/95 rounded-3xl shadow-2xl px-8 py-10 w-full max-w-md flex flex-col items-center relative">
+        <div className={`${
+          theme === "dark" 
+            ? "bg-gray-800/95 text-white" 
+            : "bg-white/95"
+          } rounded-3xl shadow-2xl px-8 py-10 w-full max-w-md flex flex-col items-center relative`}
+        >
           {/* Beta Badge */}
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
             <span className="bg-[#4785FF] text-white font-medium px-4 py-1 rounded-full text-xs">
@@ -122,8 +119,12 @@ const HomeSelect: React.FC<Props> = ({ onGoogle }) => {
             />
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-800 mb-1">AI Anime Chat</h1>
-          <p className="text-gray-600 text-sm mb-8">
+          <h1 className={`text-2xl font-bold mb-1 ${
+            theme === "dark" ? "text-white" : "text-gray-800"
+          }`}>AI Anime Chat</h1>
+          <p className={`text-sm mb-8 ${
+            theme === "dark" ? "text-gray-300" : "text-gray-600"
+          }`}>
             MyKugy
           </p>
 
@@ -176,7 +177,9 @@ const HomeSelect: React.FC<Props> = ({ onGoogle }) => {
           </div>
 
           {/* Footer */}
-          <div className="mt-8 text-center text-xs text-gray-500">
+          <div className={`mt-8 text-center text-xs ${
+            theme === "dark" ? "text-gray-400" : "text-gray-500"
+          }`}>
             <p>
               {currentLang.code === 'jp' ? 'MyKugy Team により愛を込めて制作' :
                currentLang.code === 'en' ? 'Made with ❤️ by MyKugy Team' :

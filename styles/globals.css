@@ -1,3 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Gradient Animation */
 @keyframes gradient-xy {
   0% {
     background-position: 0% 0%;
@@ -13,6 +18,36 @@
 .animate-gradient-xy {
   animation: gradient-xy 15s ease infinite;
   background-size: 400% 400%;
+}
+
+/* Glow Animation */
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 20px 3px rgba(59, 130, 246, 0.5),
+                0 0 40px 7px rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 25px 5px rgba(59, 130, 246, 0.6),
+                0 0 50px 10px rgba(59, 130, 246, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 20px 3px rgba(59, 130, 246, 0.5),
+                0 0 40px 7px rgba(59, 130, 246, 0.4);
+  }
+}
+
+.animate-glow {
+  animation: glow 3s ease-in-out infinite;
+}
+
+/* Shine Effect */
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) rotate(45deg);
+  }
 }
 
 .shine {
@@ -37,11 +72,139 @@
   animation: shine 3s infinite;
 }
 
-@keyframes shine {
+/* Pulse Animation */
+@keyframes pulse {
   0% {
-    transform: translateX(-100%) rotate(45deg);
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.6;
   }
   100% {
-    transform: translateX(100%) rotate(45deg);
+    transform: scale(1);
+    opacity: 0.8;
   }
 }
+
+.animate-pulse-slow {
+  animation: pulse 3s infinite;
+}
+
+/* Blur Transition */
+.blur-transition {
+  transition: filter 0.3s ease-in-out;
+}
+
+.blur-transition:hover {
+  filter: blur(4px);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.7);
+}
+
+/* Glass Effect */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Text Gradient */
+.text-gradient {
+  background: linear-gradient(to right, #3b82f6, #8b5cf6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Border Gradient */
+.border-gradient {
+  border: double 2px transparent;
+  background-image: linear-gradient(white, white), 
+                    linear-gradient(to right, #3b82f6, #8b5cf6);
+  background-origin: border-box;
+  background-clip: content-box, border-box;
+}
+
+/* Loading Animation */
+@keyframes loading {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-loading {
+  animation: loading 1s linear infinite;
+}
+
+/* Hide Scrollbar but Keep Functionality */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom Selection */
+::selection {
+  background: rgba(59, 130, 246, 0.3);
+  color: white;
+}
+
+/* Focus Ring */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-transparent;
+}
+
+/* Disable Tap Highlight on Mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Custom Utility Classes */
+@layer utilities {
+  .text-shadow-sm {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+  
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .text-shadow-md {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  }
+  
+  .text-shadow-lg {
+    text-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  }
+    }

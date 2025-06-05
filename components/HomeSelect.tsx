@@ -19,19 +19,38 @@ const HomeSelect: React.FC<Props> = ({ onGoogle, bgStyle }) => {
   return (
     <div
       className="min-h-screen flex items-center justify-center"
-      style={bgStyle}
+      style={{
+        background: "url('https://raw.githubusercontent.com/Minatoz997/myImages/main/angel_background.png') center/cover no-repeat",
+        position: "relative"
+      }}
     >
-      <div className="bg-white/80 rounded-3xl shadow-2xl px-8 py-10 w-full max-w-md mx-4 border border-blue-200 flex flex-col items-center relative">
+      {/* Language Selector */}
+      <div className="absolute top-4 left-4 flex gap-2">
+        <button className="px-3 py-1 rounded-md bg-blue-100/80 text-blue-900 text-sm font-medium">
+          Biru Langit
+        </button>
+        <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-blue-100/80 text-blue-900 text-sm font-medium">
+          <img
+            src="https://raw.githubusercontent.com/Minatoz997/myImages/main/id.png"
+            alt="Indonesia"
+            className="w-4 h-4"
+          />
+          Indonesia
+        </div>
+      </div>
+
+      {/* Main Card */}
+      <div className="bg-white/80 rounded-3xl shadow-2xl px-8 py-10 w-full max-w-md mx-4 border border-blue-200 flex flex-col items-center relative backdrop-blur-sm">
         <div className="absolute -top-8 left-1/2 -translate-x-1/2">
           <span className="bg-gradient-to-r from-blue-400 to-purple-400 text-white font-bold px-4 py-1 rounded-full shadow text-xs tracking-wider">
             MyKugy Beta
           </span>
         </div>
 
-        {/* Logo dan judul */}
+        {/* Logo */}
         <div className="w-32 h-32 mb-6 relative">
           <img
-            src="https://raw.githubusercontent.com/Minatoz/myImages/main/logo1.png"
+            src="https://raw.githubusercontent.com/Minatoz997/myImages/main/logo1.png"
             alt="MyKugy Logo"
             className="w-full h-full object-contain"
           />

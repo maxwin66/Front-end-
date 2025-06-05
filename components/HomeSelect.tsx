@@ -24,26 +24,11 @@ const HomeSelect: React.FC<Props> = ({ onGoogle }) => {
         backgroundRepeat: "no-repeat"
       }}
     >
-      {/* Language Selector */}
-      <div className="fixed top-4 left-4 flex gap-2">
-        <button className="px-3 py-1 rounded-md bg-white/80 text-blue-900 text-sm font-medium">
-          Biru Langit
-        </button>
-        <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-white/80 text-blue-900 text-sm font-medium">
-          <img
-            src="https://raw.githubusercontent.com/Minatoz997/myImages/main/id.png"
-            alt="Indonesia"
-            className="w-4 h-4"
-          />
-          Indonesia
-        </div>
-      </div>
-
       {/* Center Card */}
       <div className="h-screen flex items-center justify-center px-4">
         <div className="bg-white/95 rounded-3xl shadow-2xl px-8 py-10 w-full max-w-md flex flex-col items-center relative">
           {/* Beta Badge */}
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
             <span className="bg-[#4785FF] text-white font-medium px-4 py-1 rounded-full text-xs">
               MyKugy Beta
             </span>
@@ -52,7 +37,7 @@ const HomeSelect: React.FC<Props> = ({ onGoogle }) => {
           {/* Logo */}
           <div className="w-24 h-24 mb-4">
             <img
-              src="https://raw.githubusercontent.com/Minatoz997/myImages/main/logo1.png"
+              src="/logo.png" // Pindahkan logo ke folder public
               alt="MyKugy Logo"
               className="w-full h-full object-contain"
             />

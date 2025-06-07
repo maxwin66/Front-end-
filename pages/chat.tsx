@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import ChatInterface from '../components/ChatInterface';
-import ThemeLangSwitcher from '../components/ThemeLangSwitcher';
+
 
 const ChatPage = () => {
   const router = useRouter();

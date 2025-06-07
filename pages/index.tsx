@@ -296,6 +296,12 @@ const IndexPage = () => {
               window.location.href = "https://backend-cb98.onrender.com/auth/google";
             }
           }}
+          onGuest={() => {
+            const guestEmail = `guest_${Math.random().toString(36).substr(2, 9)}@guest.com`;
+            setEmail(guestEmail);
+            setCredits(20);
+            setStep("guest");
+          }}
           bgStyle={darkMode ? darkBg : animeBg}
         />
       </>

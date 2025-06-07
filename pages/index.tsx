@@ -2,7 +2,6 @@ import { useState, useEffect, useContext } from "react";
 import { useRouter } from "next/router";
 import HomeSelect from "../components/HomeSelect";
 import ParticlesBackground from "../components/ParticlesBackground";
-import ThemeLangSwitcher from "../components/ThemeLangSwitcher";
 import { UiContext } from "./_app";
 
 const animeQuotes = [
@@ -16,42 +15,16 @@ const animeQuotes = [
 ];
 
 const texts = {
-  id: {
-    start: "Mulai",
-    carousel: [
-      "🎁 Gratis 75 Kredit untuk Pengguna Baru!",
-      "🚀 Login dengan Google atau Sebagai Tamu",
-      "💬 Chat AI Karakter Anime 24/7",
-      "✨ Privasi Aman & Tampilan Premium",
-    ],
-    version: "Versi",
-    developed: "Dikembangkan dengan",
-    by: "oleh",
-  },
-  en: {
-    start: "Start",
-    carousel: [
-      "🎁 75 Free Credits for New Users!",
-      "🚀 Login with Google or as Guest",
-      "💬 Chat with Anime AI 24/7",
-      "✨ Secure Privacy & Premium Appearance",
-    ],
-    version: "Version",
-    developed: "Developed with",
-    by: "by",
-  },
-  jp: {
-    start: "スタート",
-    carousel: [
-      "🎁 新規ユーザーに75クレジット無料！",
-      "🚀 Googleでログインまたはゲスト利用",
-      "💬 24時間アニメAIチャット",
-      "✨ 安全なプライバシー＆プレミアムデザイン",
-    ],
-    version: "バージョン",
-    developed: "開発：",
-    by: "",
-  },
+  start: "Mulai",
+  carousel: [
+    "🎁 Gratis 75 Kredit untuk Pengguna Baru!",
+    "🚀 Login dengan Google atau Sebagai Tamu",
+    "💬 Chat AI Karakter Anime 24/7",
+    "✨ Privasi Aman & Tampilan Premium",
+  ],
+  version: "Versi",
+  developed: "Dikembangkan dengan",
+  by: "oleh",
 };
 
 const animeBg = {
@@ -73,7 +46,7 @@ const IndexPage: React.FC = () => {
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
   const [quoteIdx, setQuoteIdx] = useState(Math.floor(Math.random() * animeQuotes.length));
 
-  const { theme, darkMode, lang } = useContext(UiContext);
+  const { darkMode } = useContext(UiContext); // Only use darkMode, no lang/theme switcher
 
   useEffect(() => {
     if (step !== "start") return;
@@ -89,7 +62,7 @@ const IndexPage: React.FC = () => {
   useEffect(() => {
     if (step === "start") {
       const interval = setInterval(() => {
-        setFeatureIdx((i) => (i + 1) % texts[lang].carousel.length);
+        setFeatureIdx((i) => (i + 1) % texts.carousel.length);
         setCarouselProg(0);
       }, 2500);
       const prog = setInterval(() => {
@@ -100,7 +73,7 @@ const IndexPage: React.FC = () => {
         clearInterval(prog);
       };
     }
-  }, [step, lang]);
+  }, [step]);
 
   useEffect(() => {
     if (step !== "start") return;
@@ -139,19 +112,15 @@ const IndexPage: React.FC = () => {
         }
       >
         <ParticlesBackground darkMode={darkMode} />
-        <ThemeLangSwitcher />
 
         <div className="absolute left-1/2 transform -translate-x-1/2 top-8 z-10">
-          <span className={`bg-gradient-to-r ${theme.gradient} text-white text-xs font-bold px-3 py-1 rounded-full shadow`}>
+          <span className="bg-gradient-to-r from-blue-400 to-sky-400 text-white text-xs font-bold px-3 py-1 rounded-full shadow">
             Beta
           </span>
         </div>
 
         <div className="absolute top-14 left-0 right-0 flex flex-col items-center z-10">
-          <div
-            className="text-2xl font-extrabold drop-shadow-lg tracking-wider"
-            style={{ color: theme.color, textShadow: "0 2px 8px #0369a1cc" }}
-          >
+          <div className="text-2xl font-extrabold drop-shadow-lg tracking-wider" style={{ color: "#38bdf8", textShadow: "0 2px 8px #0369a1cc" }}>
             MyKugy Ai Chat Anime
           </div>
         </div>
@@ -161,23 +130,23 @@ const IndexPage: React.FC = () => {
             className={`bg-white/30 ${darkMode ? "bg-opacity-10" : "backdrop-blur-2xl"} rounded-3xl shadow-2xl p-8 flex flex-col items-center min-w-[320px] max-w-[94vw] w-full mx-2 border border-blue-200/50 dark:border-slate-600/30 relative animate-glow`}
           >
             <div className="mb-6 w-full">
-              <div className="text-md" style={{ color: theme.color, fontWeight: 700, textAlign: "center" }}>
-                {texts[lang].carousel[featureIdx]}
+              <div className="text-md" style={{ color: "#38bdf8", fontWeight: 700, textAlign: "center" }}>
+                {texts.carousel[featureIdx]}
               </div>
               <div className="w-full h-1 bg-blue-100 rounded-full mt-1">
                 <div
                   className="h-1 rounded-full transition-all"
-                  style={{ width: `${carouselProg}%`, background: theme.color }}
+                  style={{ width: `${carouselProg}%`, background: "#38bdf8" }}
                 />
               </div>
             </div>
 
             <button
-              className={`px-16 py-4 text-2xl rounded-full font-bold bg-gradient-to-r ${theme.gradient} shadow-xl text-white hover:scale-105 hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent`}
+              className="px-16 py-4 text-2xl rounded-full font-bold bg-gradient-to-r from-blue-400 to-sky-400 shadow-xl text-white hover:scale-105 hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent"
               onClick={handleStart}
               disabled={blurTrans}
             >
-              {texts[lang].start}
+              {texts.start}
             </button>
 
             {blurTrans && (
@@ -186,11 +155,11 @@ const IndexPage: React.FC = () => {
 
             <style>{`
               .animate-glow {
-                box-shadow: 0 0 20px 3px ${theme.color}80, 0 0 40px 7px ${theme.color}60;
+                box-shadow: 0 0 20px 3px #38bdf880, 0 0 40px 7px #38bdf860;
                 transition: box-shadow 0.3s;
               }
               .animate-glow:hover {
-                box-shadow: 0 0 36px 10px ${theme.color}88, 0 0 72px 12px ${theme.color}80;
+                box-shadow: 0 0 36px 10px #38bdf888, 0 0 72px 12px #38bdf880;
               }
             `}</style>
 
@@ -205,8 +174,8 @@ const IndexPage: React.FC = () => {
 
         <div className="absolute bottom-3 w-full flex flex-col items-center z-10 text-xs text-white/80">
           <div className="mb-1 flex gap-2">
-            <span className={`bg-blue-300/80 text-sky-800 px-2 py-0.5 rounded font-bold text-xs`}>
-              {texts[lang].version} v1.0.0 Beta
+            <span className="bg-blue-300/80 text-sky-800 px-2 py-0.5 rounded font-bold text-xs">
+              {texts.version} v1.0.0 Beta
             </span>
             <span>|</span>
             <a href="https://instagram.com/yourbrand" target="_blank" rel="noopener noreferrer" className="hover:text-blue-300 transition">
@@ -226,7 +195,7 @@ const IndexPage: React.FC = () => {
             Artwork by AI | <a href="/privacy" className="underline hover:text-blue-200">Kebijakan Privasi</a>
           </div>
           <div className="mt-1">
-            {texts[lang].developed} <span className="text-pink-300">❤️</span> {texts[lang].by}{" "}
+            {texts.developed} <span className="text-pink-300">❤️</span> {texts.by}{" "}
             <b className="text-sky-300">Eichiro</b>
           </div>
         </div>
@@ -238,7 +207,6 @@ const IndexPage: React.FC = () => {
     return (
       <>
         <ParticlesBackground darkMode={darkMode} />
-        <ThemeLangSwitcher />
         <HomeSelect
           onGoogle={() => {
             if (typeof window !== "undefined") {

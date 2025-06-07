@@ -1,6 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import ThemeLangSwitcher from "../components/ThemeLangSwitcher";
 import { UiContext } from "./_app";
 
 const animeBg = {
@@ -93,7 +92,7 @@ const MenuPage: React.FC = () => {
       className="min-h-screen flex flex-col items-center justify-center transition-colors"
       style={darkMode ? darkBg : animeBg}
     >
-      <ThemeLangSwitcher />
+      
 
       <div className="bg-white/80 dark:bg-slate-800/90 rounded-3xl shadow-2xl px-8 py-10 w-full max-w-md mx-4 flex flex-col items-center border border-blue-200 dark:border-slate-600 relative">
         <div className="absolute -top-8 left-1/2 -translate-x-1/2">

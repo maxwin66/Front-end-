@@ -3,20 +3,26 @@ import { UiContext } from "../pages/_app";
 import Image from "next/image";
 import { useRouter } from "next/router";
 
-interface Props {
-  email: string;
-  isGuest: boolean;
-  credits: number;
-  bgStyle?: React.CSSProperties;
-  onGenerateImage: () => void;
-}
-
 interface Message {
   role: "user" | "assistant";
   content: string;
 }
 
-const ChatInterface: React.FC<Props> = ({ email, isGuest, credits: initialCredits, bgStyle, onGenerateImage }) => {
+interface Props {
+  email: string;
+  isGuest: boolean;
+  credits: number;
+  bgStyle?: React.CSSProperties;
+  onGenerateImage: () => void; // Menambahkan prop untuk generate image
+}
+
+const ChatInterface: React.FC<Props> = ({ 
+  email, 
+  isGuest, 
+  credits: initialCredits, 
+  bgStyle,
+  onGenerateImage 
+}) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -105,10 +111,6 @@ const ChatInterface: React.FC<Props> = ({ email, isGuest, credits: initialCredit
     }
   };
 
-  const handleGenerateImage = () => {
-    onGenerateImage();
-  };
-
   return (
     <div className="min-h-screen flex flex-col" style={bgStyle}>
       {/* Header */}
@@ -133,12 +135,14 @@ const ChatInterface: React.FC<Props> = ({ email, isGuest, credits: initialCredit
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              {/* Generate Image Button */}
               <button
-                onClick={handleGenerateImage}
+                onClick={onGenerateImage}
                 className="px-4 py-2 rounded-full font-medium bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow hover:opacity-90 transition"
               >
                 {lang === "id" ? "Buat Gambar" : lang === "en" ? "Generate Image" : "画像を生成"}
               </button>
+              {/* Model Selector */}
               <select
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
@@ -147,6 +151,7 @@ const ChatInterface: React.FC<Props> = ({ email, isGuest, credits: initialCredit
                 <option value="OpenRouter (Grok 3 Mini Beta)">Grok 3 Mini</option>
                 <option value="OpenRouter (Gemini 2.0 Flash)">Gemini 2.0</option>
               </select>
+              {/* Logout Button */}
               <button
                 onClick={() => router.push("/")}
                 className="px-4 py-2 rounded-full font-medium bg-red-500 text-white hover:bg-red-600 transition"
@@ -158,7 +163,7 @@ const ChatInterface: React.FC<Props> = ({ email, isGuest, credits: initialCredit
         </div>
       </div>
 
-      {/* Chat Container */}
+      {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto p-4">
         <div className="max-w-3xl mx-auto space-y-4">
           {messages.map((message, index) => (

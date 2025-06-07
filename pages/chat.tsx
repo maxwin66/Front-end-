@@ -1,41 +1,33 @@
-import { useState, useEffect, useContext } from "react";
-import ChatInterface from "../components/ChatInterface";
-import ThemeLangSwitcher from "../components/ThemeLangSwitcher";
-import { UiContext } from "./_app";
-
-const animeBg = {
-  background: "url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png') center/cover no-repeat",
-  minHeight: "100vh"
-};
-const darkBg = {
-  background: "linear-gradient(135deg,#0f172a 40%,#172554 100%)",
-  minHeight: "100vh"
-};
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import ChatInterface from '../components/ChatInterface';
+import ThemeLangSwitcher from '../components/ThemeLangSwitcher';
 
 const ChatPage = () => {
-  const [email, setEmail] = useState("");
-  const [credits, setCredits] = useState(0);
+  const router = useRouter();
+  const [email, setEmail] = useState('');
   const [isGuest, setIsGuest] = useState(false);
+  const [credits, setCredits] = useState(0);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const gotEmail = params.get("email");
-      const guest = params.get("guest");
-      
-      if (gotEmail) {
-        setEmail(gotEmail);
-        setIsGuest(false);
-        setCredits(75); // Set 75 credits for email login
-      } else if (guest === "1") {
-        setIsGuest(true);
-        setEmail("");
-        setCredits(20); // Set 20 credits for guest mode
-      }
+    // Get email and guest status from URL params
+    const params = new URLSearchParams(window.location.search);
+    const emailParam = params.get('email');
+    if (!emailParam) {
+      router.push('/');
+      return;
     }
-  }, []);
 
-  const { theme, darkMode } = useContext(UiContext);
+    const isGuestEmail = emailParam.toLowerCase().startsWith('guest');
+    setEmail(emailParam);
+    setIsGuest(isGuestEmail);
+    setCredits(isGuestEmail ? 20 : 75);
+
+    // Clean up URL
+    window.history.replaceState({}, document.title, '/chat');
+  }, [router]);
+
+  if (!email) return null;
 
   return (
     <>
@@ -44,10 +36,5 @@ const ChatPage = () => {
         email={email}
         isGuest={isGuest}
         credits={credits}
-        bgStyle={darkMode ? darkBg : animeBg}
       />
-    </>
-  );
-};
-
-export default ChatPage;
+    

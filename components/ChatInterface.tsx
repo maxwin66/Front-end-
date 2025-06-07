@@ -13,15 +13,13 @@ interface Props {
   isGuest: boolean;
   credits: number;
   bgStyle?: React.CSSProperties;
-  onGenerateImage: () => void; // Menambahkan prop untuk generate image
 }
 
 const ChatInterface: React.FC<Props> = ({ 
   email, 
   isGuest, 
   credits: initialCredits, 
-  bgStyle,
-  onGenerateImage 
+  bgStyle
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
@@ -32,6 +30,7 @@ const ChatInterface: React.FC<Props> = ({
   const router = useRouter();
   const { theme, darkMode, lang } = useContext(UiContext);
 
+  // Fetch chat history when component mounts
   useEffect(() => {
     const fetchHistory = async () => {
       try {
@@ -55,12 +54,14 @@ const ChatInterface: React.FC<Props> = ({
     if (email) fetchHistory();
   }, [email]);
 
+  // Auto scroll to bottom when new messages arrive
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
+  // Handle sending messages
   const handleSend = async () => {
     if (!inputMessage.trim() || loading) return;
 
@@ -135,13 +136,6 @@ const ChatInterface: React.FC<Props> = ({
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              {/* Generate Image Button */}
-              <button
-                onClick={onGenerateImage}
-                className="px-4 py-2 rounded-full font-medium bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow hover:opacity-90 transition"
-              >
-                {lang === "id" ? "Buat Gambar" : lang === "en" ? "Generate Image" : "画像を生成"}
-              </button>
               {/* Model Selector */}
               <select
                 value={model}

@@ -8,26 +8,31 @@ const ChatPage = () => {
   const [email, setEmail] = useState('');
   const [isGuest, setIsGuest] = useState(false);
   const [credits, setCredits] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Get email and guest status from URL params
     const params = new URLSearchParams(window.location.search);
     const emailParam = params.get('email');
+    const guestParam = params.get('guest');
+    console.log('ChatPage query:', { emailParam, guestParam });
+
     if (!emailParam) {
+      console.log('No email param, redirecting to /');
       router.push('/');
       return;
     }
 
-    const isGuestEmail = emailParam.toLowerCase().startsWith('guest');
     setEmail(emailParam);
+    const isGuestEmail = emailParam.toLowerCase().startsWith('guest');
     setIsGuest(isGuestEmail);
     setCredits(isGuestEmail ? 20 : 75);
+    setIsLoading(false);
 
     // Clean up URL
     window.history.replaceState({}, document.title, '/chat');
-  }, [router]);
+  }, [router.query]);
 
-  if (!email) return null;
+  if (isLoading || !email) return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
 
   return (
     <>

@@ -1,16 +1,7 @@
 import { useState, useContext, useEffect } from "react";
 import { UiContext } from "./_app";
-import Image from "next/image";
 import { useRouter } from "next/router";
 
-interface Props {
-  onBack: () => void;
-  email: string;
-  credits: number;
-  onCreditsUpdate: (newCredits: number) => void;
-}
-
-// Texts with default language "id" (no switcher needed)
 const texts = {
   title: "Buat Gambar AI",
   placeholder: "Masukkan deskripsi gambar yang kamu inginkan...",
@@ -36,19 +27,28 @@ const darkBg = {
   minHeight: "100vh",
 };
 
-const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits, onCreditsUpdate }) => {
-  const { darkMode } = useContext(UiContext); // Only use darkMode, no lang/theme switcher
+const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits: initialCredits, onCreditsUpdate }) => {
+  const { darkMode } = useContext(UiContext);
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [credits, setCredits] = useState(initialCredits); // State lokal buat credits
   const router = useRouter();
+
+  // Validasi kredit dan sinkronisasi dengan props
+  useEffect(() => {
+    setCredits(initialCredits); // Update credits kalau props berubah
+  }, [initialCredits]);
 
   // Validasi kredit
   const canGenerate = credits >= 10 && !loading && prompt.trim().length > 0;
 
   const handleGenerate = async () => {
-    if (!canGenerate) return;
+    if (!canGenerate) {
+      if (credits < 10) setError(texts.error.noCredits);
+      return;
+    }
 
     setLoading(true);
     setError("");
@@ -83,7 +83,6 @@ const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits, onCreditsU
     if (!result) return;
 
     try {
-      // Decode base64
       const byteCharacters = atob(result);
       const byteNumbers = new Array(byteCharacters.length);
 
@@ -94,7 +93,6 @@ const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits, onCreditsU
       const byteArray = new Uint8Array(byteNumbers);
       const blob = new Blob([byteArray], { type: "image/png" });
 
-      // Create download link
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;

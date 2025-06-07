@@ -4,6 +4,7 @@ import HomeSelect from "../components/HomeSelect";
 import ChatInterface from "../components/ChatInterface";
 import ParticlesBackground from "../components/ParticlesBackground";
 import ThemeLangSwitcher from "../components/ThemeLangSwitcher";
+import GenerateImagePage from "./generate-image";
 import { UiContext } from "./_app";
 
 // Quotes anime inspiratif
@@ -60,14 +61,22 @@ const animeBg = {
   background: "url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png') center/cover no-repeat",
   minHeight: "100vh"
 };
+
 const darkBg = {
   background: "linear-gradient(135deg,#0f172a 40%,#172554 100%)",
   minHeight: "100vh"
 };
 
+// Interface untuk page state
+interface PageState {
+  step: "start" | "select" | "guest" | "login" | "generate-image";
+  credits: number;
+  email: string;
+}
+
 const IndexPage = () => {
   const router = useRouter();
-  const [step, setStep] = useState<"start" | "select" | "guest" | "login">("start");
+  const [step, setStep] = useState<PageState["step"]>("start");
   const [credits, setCredits] = useState(0);
   const [email, setEmail] = useState("");
   const [featureIdx, setFeatureIdx] = useState(0);
@@ -165,6 +174,31 @@ const IndexPage = () => {
     return () => { document.body.style.cursor = "auto"; };
   }, [step]);
 
+  // Handle transition to generate image page
+  const handleGenerateImage = () => {
+    setStep("generate-image");
+  };
+
+  // Handle back from generate image
+  const handleBackFromGenerate = () => {
+    setStep(email.toLowerCase().startsWith("guest") ? "guest" : "login");
+  };
+
+  // --- HANDLE GENERATE IMAGE PAGE ---
+  if (step === "generate-image") {
+    return (
+      <>
+        <ThemeLangSwitcher />
+        <GenerateImagePage 
+          onBack={handleBackFromGenerate}
+          email={email}
+          credits={credits}
+          onCreditsUpdate={setCredits}
+        />
+      </>
+    );
+  }
+
   // --- HALAMAN DEPAN ---
   if (step === "start") {
     return (
@@ -197,7 +231,7 @@ const IndexPage = () => {
 
         {/* Card + Tombol Mulai */}
         <div className="flex flex-1 items-center justify-center">
-          <div className={`bg-white/30 ${darkMode ? "bg-opacity-10" : "backdrop-blur-2xl"} rounded-3xl shadow-2xl p-8 flex flex-col items-center min-w-[320px] max-w-[94vw] w-full mx-2 border border-white/50 relative`}>
+          <div className={`bg-white/30 ${darkMode ? "bg-opacity-10" : "backdrop-blur-2xl"} rounded-3xl shadow-2xl p-8 flex flex-col items-center min-w-[320px] max-w-[94vw] w-full mx-2 border border-white/20`}>
             {/* Carousel fitur */}
             <div className="mb-6 w-full">
               <div className="text-md" style={{ color: theme.color, fontWeight: 700, textAlign: "center" }}>
@@ -213,7 +247,7 @@ const IndexPage = () => {
             </div>
             {/* Tombol Mulai besar */}
             <button
-              className={`px-16 py-4 text-2xl rounded-full font-bold bg-gradient-to-r ${theme.gradient} shadow-xl text-white hover:scale-105 hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-200/40 animate-glow ${blurTrans ? "blur-sm" : ""}`}
+              className={`px-16 py-4 text-2xl rounded-full font-bold bg-gradient-to-r ${theme.gradient} shadow-xl text-white hover:scale-105 hover:shadow-2xl transition-all duration-300 focus:outline-none animate-glow`}
               onClick={handleStart}
               style={{ letterSpacing: '2px' }}
               disabled={blurTrans}
@@ -234,7 +268,7 @@ const IndexPage = () => {
             {/* Quote Anime */}
             <div className="mt-7 mb-2 w-full flex flex-col items-center">
               <div className="text-xs italic text-blue-900 text-center max-w-xs transition-all duration-500">
-                “{animeQuotes[quoteIdx].text}” <span className="not-italic font-bold text-blue-600">- {animeQuotes[quoteIdx].author}</span>
+                "{animeQuotes[quoteIdx].text}" <span className="not-italic font-bold text-blue-600">- {animeQuotes[quoteIdx].author}</span>
               </div>
             </div>
           </div>
@@ -287,6 +321,7 @@ const IndexPage = () => {
         isGuest={step === "guest" || (email && email.toLowerCase().startsWith("guest"))}
         credits={credits}
         bgStyle={darkMode ? darkBg : animeBg}
+        onGenerateImage={handleGenerateImage}
       />
     </>
   );

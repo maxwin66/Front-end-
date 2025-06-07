@@ -72,10 +72,14 @@ const ChatInterface: React.FC<Props> = ({
     // Add welcome message
     setMessages([{
       role: "assistant",
-      content: `Halo! Saya adalah AI Assistant yang siap membantu kamu. Kamu memiliki ${initialCredits} kredit.`,
+      content: lang === "id"
+        ? `Halo! Saya adalah AI Assistant yang siap membantu kamu. Kamu memiliki ${initialCredits} kredit.`
+        : lang === "en"
+          ? `Hello! I'm your AI Assistant ready to help. You have ${initialCredits} credits.`
+          : `こんにちは！私はあなたのAIアシスタントです。${initialCredits}クレジットがあります。`,
       timestamp: new Date().toISOString()
     }]);
-  }, [isGuest]);
+  }, [isGuest, lang]);
 
   // Fetch chat history
   useEffect(() => {
@@ -83,7 +87,17 @@ const ChatInterface: React.FC<Props> = ({
       try {
         const token = sessionStorage.getItem("token");
         if (!token) {
-          router.push("/");
+          console.error('No token found in sessionStorage');
+          setMessages(prev => [...prev, {
+            role: "assistant",
+            content: lang === "id"
+              ? "Sesi tidak valid. Silakan login kembali."
+              : lang === "en"
+                ? "Invalid session. Please log in again."
+                : "セッションが無効です。再度ログインしてください。",
+            timestamp: new Date().toISOString()
+          }]);
+          setTimeout(() => router.push("/"), 2000);
           return;
         }
 
@@ -100,34 +114,58 @@ const ChatInterface: React.FC<Props> = ({
         if (response.ok) {
           const data = await response.json();
           if (Array.isArray(data.history)) {
-            setMessages(
-              data.history.map((h: any) => ({
+            setMessages(prev => [
+              ...prev,
+              ...data.history.map((h: any) => ({
                 role: h.role || (h.question ? "user" : "assistant"),
                 content: h.question || h.answer,
                 timestamp: h.timestamp
               }))
-            );
+            ]);
             if (typeof data.credits === 'number') {
               setCredits(data.credits);
             }
           }
         } else if (response.status === 401) {
-          router.push("/");
+          console.error('Unauthorized: Invalid or expired token');
+          setMessages(prev => [...prev, {
+            role: "assistant",
+            content: lang === "id"
+              ? "Sesi Anda telah berakhir. Silakan login kembali."
+              : lang === "en"
+                ? "Your session has expired. Please log in again."
+                : "セッションが終了しました。再度ログインしてください。",
+            timestamp: new Date().toISOString()
+          }]);
+          setTimeout(() => router.push("/"), 2000);
         }
       } catch (error) {
         console.error("Error fetching history:", error);
+        setMessages(prev => [...prev, {
+          role: "assistant",
+          content: lang === "id"
+            ? "Gagal memuat riwayat chat. Silakan coba lagi."
+            : lang === "en"
+              ? "Failed to load chat history. Please try again."
+              : "チャット履歴の読み込みに失敗しました。もう一度お試しください。",
+          timestamp: new Date().toISOString()
+        }]);
       }
     };
 
     if (email) fetchHistory();
-  }, [email, router]);
+  }, [email, router, lang]);
 
   const handleSend = async () => {
     if (!inputMessage.trim() || loading || credits <= 0) {
       if (credits <= 0) {
         setMessages(prev => [...prev, {
           role: "assistant",
-          content: "Maaf, kredit Anda habis. Silakan login dengan Google untuk mendapatkan kredit tambahan.",
+          content: lang === "id"
+            ? "Maaf, kredit Anda habis. Silakan login dengan Google untuk mendapatkan kredit tambahan."
+            : lang === "en"
+              ? "Sorry, you have no credits left. Please log in with Google for more credits."
+              : "申し訳ありません、クレジットが不足しています。Googleでログインしてクレジットを追加してください。",
           timestamp: new Date().toISOString()
         }]);
       }
@@ -147,7 +185,17 @@ const ChatInterface: React.FC<Props> = ({
     try {
       const token = sessionStorage.getItem("token");
       if (!token) {
-        router.push("/");
+        console.error('No token found in sessionStorage');
+        setMessages(prev => [...prev, {
+          role: "assistant",
+          content: lang === "id"
+            ? "Sesi tidak valid. Silakan login kembali."
+            : lang === "en"
+              ? "Invalid session. Please log in again."
+              : "セッションが無効です。再度ログインしてください。",
+          timestamp: new Date().toISOString()
+        }]);
+        setTimeout(() => router.push("/"), 2000);
         return;
       }
 
@@ -167,8 +215,18 @@ const ChatInterface: React.FC<Props> = ({
       });
 
       if (response.status === 401) {
-        router.push("/");
-        throw new Error("Sesi Anda telah berakhir. Silakan login kembali.");
+        console.error('Unauthorized: Invalid or expired token');
+        setMessages(prev => [...prev, {
+          role: "assistant",
+          content: lang === "id"
+            ? "Sesi Anda telah berakhir. Silakan login kembali."
+            : lang === "en"
+              ? "Your session has expired. Please log in again."
+              : "セッションが終了しました。再度ログインしてください。",
+          timestamp: new Date().toISOString()
+        }]);
+        setTimeout(() => router.push("/"), 2000);
+        return;
       }
 
       const data = await response.json();
@@ -179,33 +237,23 @@ const ChatInterface: React.FC<Props> = ({
           content: data.reply,
           timestamp: new Date().toISOString()
         }]);
-        
-        // Update credits after successful response
         if (typeof data.credits === 'number') {
           setCredits(data.credits);
         } else {
-          setCredits(prev => Math.max(0, prev - 1)); // Fallback credit reduction
+          setCredits(prev => Math.max(0, prev - 1));
         }
       } else {
         throw new Error("No reply from AI");
       }
-
     } catch (error) {
       console.error("Chat error:", error);
-      
-      let errorMessage = "Maaf, terjadi kesalahan. ";
-      
-      if (error instanceof Error && error.message.includes("Sesi Anda telah berakhir")) {
-        errorMessage = error.message;
-      } else if (error instanceof TypeError && error.message.includes("fetch")) {
-        errorMessage += "Koneksi terputus. Periksa internet Anda.";
-      } else {
-        errorMessage += "Silakan coba lagi nanti.";
-      }
-
       setMessages(prev => [...prev, {
         role: "assistant",
-        content: errorMessage,
+        content: lang === "id"
+          ? "Maaf, terjadi kesalahan. Silakan coba lagi nanti."
+          : lang === "en"
+            ? "Sorry, an error occurred. Please try again later."
+            : "申し訳ありません、エラーが発生しました。後でもう一度お試しください。",
         timestamp: new Date().toISOString()
       }]);
     } finally {
@@ -321,7 +369,11 @@ const ChatInterface: React.FC<Props> = ({
               onKeyPress={(e) => e.key === "Enter" && handleSend()}
               placeholder={
                 credits <= 0 
-                  ? "Kredit Anda habis..."
+                  ? lang === "id"
+                    ? "Kredit Anda habis..."
+                    : lang === "en"
+                      ? "Your credits are depleted..."
+                      : "クレジットが不足しています..."
                   : lang === "id"
                     ? "Ketik pesanmu di sini..."
                     : lang === "en"

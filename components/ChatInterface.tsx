@@ -1,177 +1,232 @@
-import { useContext, useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { UiContext } from "../pages/_app";
+import Image from "next/image";
+import { useRouter } from "next/router";
 
-export default function ChatInterface({ email, isGuest, credits, bgStyle }: any) {
-  const { theme, darkMode, lang } = useContext(UiContext);
-  const [value, setValue] = useState("");
-  const [messages, setMessages] = useState([
-    { from: "ai", text: lang === "id" ? "Halo! Ada yang bisa aku bantu?" : lang === "en" ? "Hello! How can I help you?" : "こんにちは！どうしたの？" }
-  ]);
+interface Props {
+  email: string;
+  isGuest: boolean;
+  credits: number;
+  bgStyle?: React.CSSProperties;
+  onGenerateImage: () => void;
+}
+
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+}
+
+const ChatInterface: React.FC<Props> = ({ email, isGuest, credits: initialCredits, bgStyle, onGenerateImage }) => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputMessage, setInputMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);      
+  const [credits, setCredits] = useState(initialCredits);
+  const [model, setModel] = useState("OpenRouter (Grok 3 Mini Beta)");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const { theme, darkMode, lang } = useContext(UiContext);
 
-  // Kredit handling
-  const [userCredits, setUserCredits] = useState(isGuest ? 20 : credits);
-  useEffect(() => { 
-    setUserCredits(isGuest ? 20 : credits); 
-  }, [credits, isGuest]);
-
-  // --- Guest ID persist ---
-  const [guestId, setGuestId] = useState("");
   useEffect(() => {
-    if (isGuest) {
-      let gid = sessionStorage.getItem("guest_id");
-      if (!gid) {
-        gid = "guest-" + Math.random().toString(36).slice(2, 10);
-        sessionStorage.setItem("guest_id", gid);
+    const fetchHistory = async () => {
+      try {
+        const response = await fetch(
+          `https://backend-cb98.onrender.com/api/history?user_email=${email}`,
+          { credentials: "include" }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setMessages(
+            data.history.map((h: any) => [
+              { role: "user", content: h.question },
+              { role: "assistant", content: h.answer },
+            ]).flat()
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching history:", error);
       }
-      setGuestId(gid);
-    }
-  }, [isGuest]);
+    };
+    if (email) fetchHistory();
+  }, [email]);
 
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
 
   const handleSend = async () => {
-    if (!value.trim() || loading || userCredits <= 0 || (isGuest && !guestId)) return;
-    const userMsg = { from: "user", text: value };
-    setMessages(prev => [...prev, userMsg]);
-    setValue("");
-    setLoading(true);
-    setUserCredits(cr => Math.max(0, cr - 1)); // Pastikan tidak negatif
+    if (!inputMessage.trim() || loading) return;
 
-    let user_email = email && email.trim() !== "" ? email : guestId;
-    console.log("handleSend user_email:", user_email, "isGuest:", isGuest, "email:", email, "guestId:", guestId);
+    const userMessage = inputMessage.trim();
+    setInputMessage("");
+    setMessages(prev => [...prev, { role: "user", content: userMessage }]);
+    setLoading(true);
 
     try {
-      const res = await fetch("https://backend-cb98.onrender.com/api/chat", {
+      const response = await fetch("https://backend-cb98.onrender.com/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          user_email,
-          message: userMsg.text,
-          model_select: "x-ai/grok-3-mini-beta"
+          user_email: email,
+          message: userMessage,
+          model_select: model
         })
       });
-      if (!res.ok) {
-        throw new Error("API error " + res.status);
+
+      const data = await response.json();
+      if (response.ok) {
+        setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+        setCredits(parseInt(data.credits));
+      } else {
+        if (data.error === "NOT_ENOUGH_CREDITS") {
+          setMessages(prev => [
+            ...prev,
+            {
+              role: "assistant",
+              content: "Maaf, kredit kamu tidak cukup! Silakan top up atau login dengan Google untuk kredit tambahan."
+            }
+          ]);
+        } else {
+          throw new Error(data.error);
+        }
       }
-      const data = await res.json();
+    } catch (error) {
+      console.error("Error sending message:", error);
       setMessages(prev => [
         ...prev,
-        { from: "ai", text: (data.reply || "Maaf, AI tidak bisa menjawab sekarang.") }
+        {
+          role: "assistant",
+          content: "Maaf, terjadi kesalahan. Silakan coba lagi nanti."
+        }
       ]);
-    } catch (e) {
-      setMessages(prev => [
-        ...prev,
-        { from: "ai", text: "Maaf, terjadi error koneksi ke server. Coba lagi nanti." }
-      ]);
-      setUserCredits(cr => cr + 1); // Kembalikan kredit jika terjadi error
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const handleKeyDown = e => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+  const handleGenerateImage = () => {
+    onGenerateImage();
   };
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center"
-      style={bgStyle}
-    >
-      <div
-        className="text-xl font-bold text-center my-4"
-        style={{ color: theme.color }}
-      >
-        MyKugy AI Chat Anime
+    <div className="min-h-screen flex flex-col" style={bgStyle}>
+      {/* Header */}
+      <div className="bg-white/90 dark:bg-gray-800/90 shadow-lg backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <Image
+                src="/logo.png"
+                alt="MyKugy Logo"
+                width={40}
+                height={40}
+                className="rounded-full"
+              />
+              <div>
+                <h1 className="font-bold text-gray-800 dark:text-white">
+                  {isGuest ? "Guest Mode" : email}
+                </h1>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Credits: {credits}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={handleGenerateImage}
+                className="px-4 py-2 rounded-full font-medium bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow hover:opacity-90 transition"
+              >
+                {lang === "id" ? "Buat Gambar" : lang === "en" ? "Generate Image" : "画像を生成"}
+              </button>
+              <select
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-sm"
+              >
+                <option value="OpenRouter (Grok 3 Mini Beta)">Grok 3 Mini</option>
+                <option value="OpenRouter (Gemini 2.0 Flash)">Gemini 2.0</option>
+              </select>
+              <button
+                onClick={() => router.push("/")}
+                className="px-4 py-2 rounded-full font-medium bg-red-500 text-white hover:bg-red-600 transition"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-      <div
-        className="w-full max-w-sm bg-white/60 rounded-2xl p-4 shadow mb-4 flex flex-col"
-        style={{
-          minHeight: 250,
-          maxHeight: "70vh",
-          overflowY: "auto",
-          margin: "0 auto"
-        }}
-      >
-        <div className="flex-1 flex flex-col gap-2 overflow-y-auto pb-2">
-          {messages.map((msg, i) => (
+
+      {/* Chat Container */}
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="max-w-3xl mx-auto space-y-4">
+          {messages.map((message, index) => (
             <div
-              key={i}
-              className={`flex ${msg.from === "user" ? "justify-end" : "justify-start"} w-full`}
+              key={index}
+              className={`flex ${
+                message.role === "user" ? "justify-end" : "justify-start"
+              }`}
             >
               <div
-                className={`
-                  rounded-2xl px-4 py-2 break-words shadow
-                  ${msg.from === "user"
-                    ? "text-white"
-                    : "text-blue-900 bg-white/90 border border-blue-100"}
-                `}
-                style={{
-                  display: "inline-block",
-                  maxWidth: "85%",
-                  width: "fit-content",
-                  minWidth: "36px",
-                  wordBreak: "break-word",
-                  background: msg.from === "user"
-                    ? `linear-gradient(to right, ${theme.color}, ${theme.color}cc)`
-                    : undefined,
-                }}
+                className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                  message.role === "user"
+                    ? "bg-blue-500 text-white"
+                    : "bg-white dark:bg-gray-800 text-gray-800 dark:text-white"
+                } shadow`}
               >
-                {msg.text}
+                {message.content}
               </div>
             </div>
           ))}
-          <div ref={scrollRef} />
+          {loading && (
+            <div className="flex justify-start">
+              <div className="bg-white dark:bg-gray-800 rounded-lg px-4 py-2 shadow">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
         </div>
-        <div className="flex gap-2 mt-3">
+      </div>
+
+      {/* Input Area */}
+      <div className="bg-white/90 dark:bg-gray-800/90 shadow-lg backdrop-blur-md p-4">
+        <div className="max-w-3xl mx-auto flex space-x-4">
           <input
             type="text"
-            value={value}
-            onChange={e => setValue(e.target.value)}
-            className="flex-1 rounded-full px-4 py-2 border"
-            placeholder={lang === "id" ? "Ketik pesan..." : lang === "en" ? "Type a message..." : "メッセージを入力..."}
-            onKeyDown={handleKeyDown}
-            disabled={loading || userCredits <= 0 || (isGuest && !guestId)}
-            autoFocus
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleSend()}
+            placeholder={
+              lang === "id"
+                ? "Ketik pesanmu di sini..."
+                : lang === "en"
+                ? "Type your message here..."
+                : "メッセージを入力..."
+            }
+            className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            disabled={loading}
           />
           <button
-            className={`px-6 py-2 rounded-full font-bold bg-gradient-to-r ${theme.gradient} text-white shadow transition`}
             onClick={handleSend}
-            style={{ letterSpacing: '1px' }}
-            disabled={loading || !value.trim() || userCredits <= 0 || (isGuest && !guestId)}
+            disabled={loading || !inputMessage.trim()}
+            className={`px-6 py-2 rounded-lg font-medium text-white transition ${
+              loading || !inputMessage.trim()
+                ? "bg-gray-400"
+                : "bg-blue-500 hover:bg-blue-600"
+            }`}
           >
-            {loading
-              ? (lang === "id" ? "..." : lang === "en" ? "..." : "...")
-              : lang === "id" ? "Kirim" : lang === "en" ? "Send" : "送信"}
+            {loading ? "..." : lang === "id" ? "Kirim" : lang === "en" ? "Send" : "送信"}
           </button>
-        </div>
-        {/* Badge email/guest & kredit */}
-        <div className="flex flex-col items-center mt-5 mb-1">
-          {email && !isGuest && (
-            <span className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-500 text-white font-semibold text-xs shadow-lg border border-white/30 select-text mb-1"
-              style={{ letterSpacing: "0.5px", boxShadow: "0 2px 8px #1e3a8a50" }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" className="inline mr-1" viewBox="0 0 24 24"><path fill="currentColor" d="M2 6a2 2 0 012-2h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm2 0v.511l8 6.222 8-6.222V6H4zm16 2.489l-7.445 5.792a2 2 0 01-2.11 0L4 8.489V18h16V8.489z"/></svg>
-              {email}
-            </span>
-          )}
-          {isGuest && (
-            <span className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-gradient-to-r from-gray-500 via-gray-700 to-gray-900 text-white font-semibold text-xs shadow-lg border border-white/20 mb-1"
-              style={{ letterSpacing: "0.5px", boxShadow: "0 2px 8px #4446" }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" className="inline mr-1" viewBox="0 0 24 24"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-              Guest Mode
-            </span>
-          )}
-          <span className="inline-block mt-1 px-3 py-1 rounded-xl bg-gradient-to-r from-pink-500 to-yellow-400 text-white text-xs font-semibold shadow-sm">
-            Kredit: {userCredits}
-          </span>
         </div>
       </div>
     </div>
   );
-          }
+};
+
+export default ChatInterface;

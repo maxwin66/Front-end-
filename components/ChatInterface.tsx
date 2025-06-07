@@ -6,13 +6,13 @@ import { useRouter } from "next/router";
 interface Message {
   role: "user" | "assistant";
   content: string;
+  timestamp?: string;
 }
 
 interface Props {
   email: string;
   isGuest: boolean;
   credits: number;
-  bgStyle?: React.CSSProperties;
 }
 
 const ChatInterface: React.FC<Props> = ({ 
@@ -25,11 +25,11 @@ const ChatInterface: React.FC<Props> = ({
   const [loading, setLoading] = useState(false);
   const [credits, setCredits] = useState(initialCredits);
   const [model, setModel] = useState("OpenRouter (Grok 3 Mini Beta)");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { theme, darkMode, lang } = useContext(UiContext);
 
+  // Background styles
   const animeBg = {
     backgroundImage: "url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png')",
     backgroundSize: "cover",
@@ -60,31 +60,41 @@ const ChatInterface: React.FC<Props> = ({
     };
 
     scrollToBottom();
-    // Also scroll when new messages are added or when loading changes
-    const timeoutId = setTimeout(scrollToBottom, 100); // Additional delay for content to render
+    const timeoutId = setTimeout(scrollToBottom, 100);
     return () => clearTimeout(timeoutId);
   }, [messages, loading]);
 
-  // Set initial credits based on login type
+  // Initialize credits and welcome message
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (email && !email.toLowerCase().startsWith("guest")) {
-        setCredits(75); // Gmail login
-      } else if (isGuest || (email && email.toLowerCase().startsWith("guest"))) {
-        setCredits(20); // Guest mode
-      }
-    }
-  }, [email, isGuest]);
+    // Set initial credits based on login type
+    const initialCredits = isGuest ? 20 : 75;
+    setCredits(initialCredits);
 
-  // Fetch chat history with retry logic
+    // Add welcome message
+    setMessages([{
+      role: "assistant",
+      content: `Halo! Saya adalah AI Assistant yang siap membantu kamu. Kamu memiliki ${initialCredits} kredit.`,
+      timestamp: new Date().toISOString()
+    }]);
+  }, [isGuest]);
+
+  // Fetch chat history
   useEffect(() => {
-    const fetchHistory = async (retryCount = 0) => {
+    const fetchHistory = async () => {
       try {
+        const token = sessionStorage.getItem("token");
+        if (!token) {
+          router.push("/");
+          return;
+        }
+
         const response = await fetch(
           `https://backend-cb98.onrender.com/api/history?user_email=${email}`,
           { 
             credentials: "include",
-            signal: AbortSignal.timeout(5000)
+            headers: {
+              "Authorization": token
+            }
           }
         );
         
@@ -92,59 +102,90 @@ const ChatInterface: React.FC<Props> = ({
           const data = await response.json();
           if (Array.isArray(data.history)) {
             setMessages(
-              data.history.map((h: any) => [
-                { role: "user", content: h.question },
-                { role: "assistant", content: h.answer },
-              ]).flat()
+              data.history.map((h: any) => ({
+                role: h.role || (h.question ? "user" : "assistant"),
+                content: h.question || h.answer,
+                timestamp: h.timestamp
+              }))
             );
+            if (typeof data.credits === 'number') {
+              setCredits(data.credits);
+            }
           }
-        } else if (retryCount < 3) {
-          setTimeout(() => fetchHistory(retryCount + 1), 1000 * (retryCount + 1));
+        } else if (response.status === 401) {
+          router.push("/");
         }
       } catch (error) {
         console.error("Error fetching history:", error);
-        if (retryCount < 3) {
-          setTimeout(() => fetchHistory(retryCount + 1), 1000 * (retryCount + 1));
-        }
       }
     };
 
     if (email) fetchHistory();
-  }, [email]);
+  }, [email, router]);
 
   const handleSend = async () => {
-    if (!inputMessage.trim() || loading) return;
+    if (!inputMessage.trim() || loading || credits <= 0) {
+      if (credits <= 0) {
+        setMessages(prev => [...prev, {
+          role: "assistant",
+          content: "Maaf, kredit Anda habis. Silakan login dengan Google untuk mendapatkan kredit tambahan.",
+          timestamp: new Date().toISOString()
+        }]);
+      }
+      return;
+    }
 
     const userMessage = inputMessage.trim();
+    const timestamp = new Date().toISOString();
     setInputMessage("");
-    setMessages(prev => [...prev, { role: "user", content: userMessage }]);
+    setMessages(prev => [...prev, { 
+      role: "user", 
+      content: userMessage,
+      timestamp 
+    }]);
     setLoading(true);
 
     try {
+      const token = sessionStorage.getItem("token");
+      if (!token) {
+        router.push("/");
+        return;
+      }
+
       const response = await fetch("https://backend-cb98.onrender.com/api/chat", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}` 
+          "Authorization": token
         },
+        credentials: "include",
         body: JSON.stringify({
           user_email: email,
           message: userMessage,
-          model_select: model
-        }),
-        signal: AbortSignal.timeout(15000)
+          model_select: model,
+          timestamp: timestamp
+        })
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.status === 401) {
+        router.push("/");
+        throw new Error("Sesi Anda telah berakhir. Silakan login kembali.");
       }
 
       const data = await response.json();
       
       if (data.reply) {
-        setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+        setMessages(prev => [...prev, { 
+          role: "assistant", 
+          content: data.reply,
+          timestamp: new Date().toISOString()
+        }]);
+        
+        // Update credits after successful response
         if (typeof data.credits === 'number') {
           setCredits(data.credits);
+        } else {
+          setCredits(prev => Math.max(0, prev - 1)); // Fallback credit reduction
         }
       } else {
         throw new Error("No reply from AI");
@@ -155,20 +196,19 @@ const ChatInterface: React.FC<Props> = ({
       
       let errorMessage = "Maaf, terjadi kesalahan. ";
       
-      if (error instanceof TypeError && error.message.includes("fetch")) {
+      if (error instanceof Error && error.message.includes("Sesi Anda telah berakhir")) {
+        errorMessage = error.message;
+      } else if (error instanceof TypeError && error.message.includes("fetch")) {
         errorMessage += "Koneksi terputus. Periksa internet Anda.";
-      } else if (error instanceof Error && error.message.includes("timeout")) {
-        errorMessage += "Server tidak merespons. Silakan coba lagi.";
-      } else if (error instanceof Error && error.message === "No reply from AI") {
-        errorMessage += "AI tidak memberikan respons. Coba pertanyaan lain.";
       } else {
         errorMessage += "Silakan coba lagi nanti.";
       }
 
-      setMessages(prev => [
-        ...prev,
-        { role: "assistant", content: errorMessage }
-      ]);
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: errorMessage,
+        timestamp: new Date().toISOString()
+      }]);
     } finally {
       setLoading(false);
     }
@@ -176,34 +216,40 @@ const ChatInterface: React.FC<Props> = ({
 
   return (
     <div className="min-h-screen flex flex-col relative">
-      {/* Background Image Container */}
+      {/* Background */}
       <div 
         className="fixed inset-0 z-0" 
         style={darkMode ? darkBg : animeBg}
       />
       
-      {/* Overlay gradient untuk background */}
+      {/* Overlay */}
       <div className="fixed inset-0 bg-gradient-to-b from-black/10 to-black/30 dark:from-black/30 dark:to-black/50 z-0" />
 
       {/* Content wrapper */}
       <div className="relative flex flex-col min-h-screen z-10">
-        {/* Header - Simplified */}
+        {/* Header */}
         <div className="bg-white/80 dark:bg-gray-800/90 backdrop-blur-md shadow-lg border-b border-white/20">
           <div className="max-w-7xl mx-auto px-4 py-3">
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-4">
                 <Image
                   src="/logo.png"
-                  alt="MyKugy Logo"
+                  alt="Logo"
                   width={40}
                   height={40}
                   className="rounded-full ring-2 ring-blue-500 p-0.5"
                 />
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
                     Credits:
                   </span>
-                  <span className="px-2 py-0.5 bg-blue-500 text-white text-xs font-bold rounded-full">
+                  <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                    credits > 10 
+                      ? 'bg-green-500 text-white' 
+                      : credits > 0 
+                        ? 'bg-yellow-500 text-white' 
+                        : 'bg-red-500 text-white'
+                  }`}>
                     {credits}
                   </span>
                 </div>
@@ -228,7 +274,7 @@ const ChatInterface: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Chat Messages with auto-scroll */}
+        {/* Chat Messages */}
         <div 
           ref={chatContainerRef}
           className="flex-1 overflow-y-auto p-4 scroll-smooth"
@@ -275,20 +321,22 @@ const ChatInterface: React.FC<Props> = ({
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSend()}
               placeholder={
-                lang === "id"
-                  ? "Ketik pesanmu di sini..."
-                  : lang === "en"
-                  ? "Type your message here..."
-                  : "メッセージを入力..."
+                credits <= 0 
+                  ? "Kredit Anda habis..."
+                  : lang === "id"
+                    ? "Ketik pesanmu di sini..."
+                    : lang === "en"
+                      ? "Type your message here..."
+                      : "メッセージを入力..."
               }
               className="flex-1 px-4 py-3 rounded-xl border border-blue-200 dark:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700/90 dark:text-white placeholder-gray-400 dark:placeholder-gray-300"
-              disabled={loading}
+              disabled={loading || credits <= 0}
             />
             <button
               onClick={handleSend}
-              disabled={loading || !inputMessage.trim()}
+              disabled={loading || !inputMessage.trim() || credits <= 0}
               className={`px-6 py-3 rounded-xl font-medium text-white transition-all ${
-                loading || !inputMessage.trim()
+                loading || !inputMessage.trim() || credits <= 0
                   ? "bg-gray-400"
                   : "bg-gradient-to-r from-blue-500 to-blue-600 hover:shadow-lg hover:scale-105"
               }`}

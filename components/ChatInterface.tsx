@@ -47,7 +47,6 @@ const ChatInterface: React.FC<Props> = ({
     backgroundAttachment: "fixed",
   };
 
-  // Auto-scrolling effect
   useEffect(() => {
     const scrollToBottom = () => {
       if (chatContainerRef.current) {
@@ -58,17 +57,14 @@ const ChatInterface: React.FC<Props> = ({
         });
       }
     };
-
     scrollToBottom();
     const timeoutId = setTimeout(scrollToBottom, 100);
     return () => clearTimeout(timeoutId);
   }, [messages, loading]);
 
-  // Initialize credits and welcome message
   useEffect(() => {
     const initialCredits = isGuest ? 20 : 75;
     setCredits(initialCredits);
-
     setMessages([
       {
         role: "assistant",
@@ -83,7 +79,6 @@ const ChatInterface: React.FC<Props> = ({
     ]);
   }, [isGuest, lang]);
 
-  // Fetch chat history
   useEffect(() => {
     const fetchHistory = async () => {
       try {
@@ -106,18 +101,16 @@ const ChatInterface: React.FC<Props> = ({
           setTimeout(() => router.push("/"), 2000);
           return;
         }
-
         console.log("Fetching history with token:", token);
         const response = await fetch(
           `https://backend-cb98.onrender.com/api/history?user_email=${encodeURIComponent(email)}`,
           {
             credentials: "include",
             headers: {
-              Authorization: token,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
-
         console.log("History API response status:", response.status);
         if (response.ok) {
           const data = await response.json();
@@ -188,7 +181,6 @@ const ChatInterface: React.FC<Props> = ({
         ]);
       }
     };
-
     if (email) fetchHistory();
   }, [email, router, lang]);
 
@@ -211,20 +203,14 @@ const ChatInterface: React.FC<Props> = ({
       }
       return;
     }
-
     const userMessage = inputMessage.trim();
     const timestamp = new Date().toISOString();
     setInputMessage("");
     setMessages((prev) => [
       ...prev,
-      {
-        role: "user",
-        content: userMessage,
-        timestamp,
-      },
+      { role: "user", content: userMessage, timestamp },
     ]);
     setLoading(true);
-
     try {
       const token = sessionStorage.getItem("token");
       if (!token) {
@@ -245,13 +231,12 @@ const ChatInterface: React.FC<Props> = ({
         setTimeout(() => router.push("/"), 2000);
         return;
       }
-
       console.log("Sending chat with token:", token);
       const response = await fetch("https://backend-cb98.onrender.com/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: token,
+          Authorization: `Bearer ${token}`,
         },
         credentials: "include",
         body: JSON.stringify({
@@ -261,7 +246,6 @@ const ChatInterface: React.FC<Props> = ({
           timestamp: timestamp,
         }),
       });
-
       console.log("Chat API response status:", response.status);
       if (response.status === 401) {
         console.error("Unauthorized: Invalid or expired token");
@@ -281,18 +265,12 @@ const ChatInterface: React.FC<Props> = ({
         setTimeout(() => router.push("/"), 2000);
         return;
       }
-
       const data = await response.json();
       console.log("Chat API data:", data);
-
       if (data.reply) {
         setMessages((prev) => [
           ...prev,
-          {
-            role: "assistant",
-            content: data.reply,
-            timestamp: new Date().toISOString(),
-          },
+          { role: "assistant", content: data.reply, timestamp: new Date().toISOString() },
         ]);
         if (typeof data.credits === "number") {
           setCredits(data.credits);
@@ -324,19 +302,13 @@ const ChatInterface: React.FC<Props> = ({
 
   return (
     <div className="min-h-screen flex flex-col relative">
-      {/* Background wrapper */}
       <div className="fixed inset-0 z-0" style={darkMode ? darkBg : animeBg} />
-
-      {/* Overlay */}
       <div className="fixed inset-0 bg-gradient-to-b from-black/20 to-blue-200/20 dark:from-black/30 dark:to-black/50 z-0" />
-
-      {/* Content wrapper */}
       <div className="relative flex flex-col min-h-screen z-10">
-        {/* Header */}
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-lg border-b border-white/20">
           <div className="max-w-7xl mx-auto px-4 py-3">
             <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4 ml-10"> {/* Tambah margin kiri */}
                 <Image
                   src="/logo.png"
                   alt="Logo"
@@ -344,18 +316,18 @@ const ChatInterface: React.FC<Props> = ({
                   height={40}
                   className="rounded-full ring-2 ring-blue-500/50 p-0.5"
                 />
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2" style={{ zIndex: 20 }}>
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
                     Credits:
                   </span>
                   <span
                     className={`px-3 py-1 rounded-full text-sm font-bold ${
                       credits > 10
-                        ? "bg-green-500 text-white"
+                        ? "bg-green-500"
                         : credits > 0
-                          ? "bg-yellow-500 text-white"
-                          : "bg-red-500 text-white"
-                    }`}
+                          ? "bg-yellow-500"
+                          : "bg-red-500"
+                    } text-white`}
                   >
                     {credits}
                   </span>
@@ -380,19 +352,12 @@ const ChatInterface: React.FC<Props> = ({
             </div>
           </div>
         </div>
-
-        {/* Chat Messages */}
-        <div
-          ref={chatContainerRef}
-          className="flex-1 overflow-y-auto p-4 scroll-smooth"
-        >
+        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 scroll-smooth">
           <div className="max-w-3xl mx-auto space-y-4">
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`flex ${
-                  message.role === "user" ? "justify-end" : "justify-start"
-                }`}
+                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
                   className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
@@ -427,8 +392,6 @@ const ChatInterface: React.FC<Props> = ({
             )}
           </div>
         </div>
-
-        {/* Input Area */}
         <div className="bg-white/80 dark:bg-gray-800/80 shadow-lg backdrop-blur-md border-t border-gray-100/20 p-4">
           <div className="max-w-3xl mx-auto flex space-x-4">
             <input

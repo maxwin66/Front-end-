@@ -1,7 +1,9 @@
 import { useState, useEffect, useContext } from "react";
+import { useRouter } from "next/router"; // Tambahkan import router
 import ChatInterface from "../components/ChatInterface";
 import ThemeLangSwitcher from "../components/ThemeLangSwitcher";
 import { UiContext } from "./_app";
+import GenerateImagePage from "./generate-image"; // Import GenerateImagePage
 
 const animeBg = {
   background: "url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png') center/cover no-repeat",
@@ -13,9 +15,11 @@ const darkBg = {
 };
 
 const ChatPage = () => {
+  const router = useRouter(); // Initialize router
   const [email, setEmail] = useState("");
-  const [credits, setCredits] = useState(0); // Set initial credits to 0
+  const [credits, setCredits] = useState(0);
   const [isGuest, setIsGuest] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -37,6 +41,37 @@ const ChatPage = () => {
 
   const { theme, darkMode } = useContext(UiContext);
 
+  // Handle generate image button click
+  const handleGenerateImage = () => {
+    setIsGeneratingImage(true);
+  };
+
+  // Handle back from generate image
+  const handleBackFromGenerate = () => {
+    setIsGeneratingImage(false);
+  };
+
+  // Handle credits update
+  const handleCreditsUpdate = (newCredits: number) => {
+    setCredits(newCredits);
+  };
+
+  // Show generate image page if isGeneratingImage is true
+  if (isGeneratingImage) {
+    return (
+      <>
+        <ThemeLangSwitcher />
+        <GenerateImagePage 
+          onBack={handleBackFromGenerate}
+          email={email}
+          credits={credits}
+          onCreditsUpdate={handleCreditsUpdate}
+        />
+      </>
+    );
+  }
+
+  // Main chat interface
   return (
     <>
       <ThemeLangSwitcher />
@@ -45,6 +80,7 @@ const ChatPage = () => {
         isGuest={isGuest}
         credits={credits}
         bgStyle={darkMode ? darkBg : animeBg}
+        onGenerateImage={handleGenerateImage} // Add the required prop
       />
     </>
   );

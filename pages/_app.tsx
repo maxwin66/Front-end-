@@ -11,21 +11,18 @@ export const UiContext = createContext({
   setLang: (_: string) => {},
 });
 
-const themes = [
-  { name: "Biru Langit", color: "#38bdf8", gradient: "from-blue-400 to-sky-400" },
-  { name: "Ungu", color: "#a78bfa", gradient: "from-purple-400 to-fuchsia-400" },
-  { name: "Pink", color: "#fb7185", gradient: "from-pink-400 to-rose-400" },
-  { name: "Hijau", color: "#34d399", gradient: "from-emerald-400 to-teal-300" },
-];
-
 function MyApp({ Component, pageProps }) {
-  const [theme, setTheme] = useState(themes[0]);
   const [darkMode, setDarkMode] = useState(false);
-  const [lang, setLang] = useState("id");
+  const [lang, setLang] = useState("id"); // Default ke Indonesia, gak perlu switcher
+
+  // Pake theme default statis, hapus array themes dan setTheme
+  const theme = { name: "Biru Langit", color: "#38bdf8", gradient: "from-blue-400 to-sky-400" };
 
   return (
-    <UiContext.Provider value={{ theme, setTheme, darkMode, setDarkMode, lang, setLang }}>
-      <Component {...pageProps} />
+    <UiContext.Provider value={{ theme, setTheme: () => {}, darkMode, setDarkMode, lang, setLang }}>
+      <div className={`min-h-screen ${darkMode ? "dark" : ""}`} style={{ background: darkMode ? "#1e293b" : theme.color }}>
+        <Component {...pageProps} />
+      </div>
     </UiContext.Provider>
   );
 }

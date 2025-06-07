@@ -46,7 +46,7 @@ const IndexPage: React.FC = () => {
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
   const [quoteIdx, setQuoteIdx] = useState(Math.floor(Math.random() * animeQuotes.length));
 
-  const { darkMode } = useContext(UiContext); // Only use darkMode, no lang/theme switcher
+  const { darkMode } = useContext(UiContext);
 
   useEffect(() => {
     if (step !== "start") return;
@@ -104,7 +104,7 @@ const IndexPage: React.FC = () => {
   if (step === "start") {
     return (
       <div
-        className={`flex flex-col min-h-screen relative overflow-hidden transition-colors duration-500`}
+        className="flex flex-col min-h-screen relative overflow-hidden transition-colors duration-500"
         style={
           darkMode
             ? darkBg
@@ -127,7 +127,7 @@ const IndexPage: React.FC = () => {
 
         <div className="flex flex-1 items-center justify-center">
           <div
-            className={`bg-white/30 ${darkMode ? "bg-opacity-10" : "backdrop-blur-2xl"} rounded-3xl shadow-2xl p-8 flex flex-col items-center min-w-[320px] max-w-[94vw] w-full mx-2 border border-blue-200/50 dark:border-slate-600/30 relative animate-glow`}
+            className="bg-white/30 ${darkMode ? 'bg-opacity-10' : 'backdrop-blur-2xl'} rounded-3xl shadow-2xl p-8 flex flex-col items-center min-w-[320px] max-w-[94vw] w-full mx-2 border border-blue-200/50 dark:border-slate-600/30 relative animate-glow"
           >
             <div className="mb-6 w-full">
               <div className="text-md" style={{ color: "#38bdf8", fontWeight: 700, textAlign: "center" }}>
@@ -221,6 +221,7 @@ const IndexPage: React.FC = () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: guestEmail }),
               });
+              console.log("Guest login response status:", response.status); // Debug log
               const data = await response.json();
               if (data.token) {
                 console.log("Guest login success, token:", data.token);
@@ -229,19 +230,20 @@ const IndexPage: React.FC = () => {
                 router.push(`/menu?guest=1&email=${encodeURIComponent(guestEmail)}`);
               } else {
                 console.error("No token from guest login, response:", data);
+                throw new Error("No token received");
+              }
+            } catch (error) {
+              console.error("Guest login error:", error);
+              if (error instanceof Error && error.message.includes("404")) {
+                console.warn("Endpoint /api/guest-login not found, redirecting to home");
+                router.push("/");
+              } else {
                 const dummyToken = "guest-token-" + guestEmail;
                 console.log("Using dummy token:", dummyToken);
                 sessionStorage.setItem("token", dummyToken);
                 localStorage.setItem("user", JSON.stringify({ email: guestEmail, isGuest: true }));
                 router.push(`/menu?guest=1&email=${encodeURIComponent(guestEmail)}`);
               }
-            } catch (error) {
-              console.error("Guest login error:", error);
-              const dummyToken = "guest-token-" + guestEmail;
-              console.log("API error, using dummy token:", dummyToken);
-              sessionStorage.setItem("token", dummyToken);
-              localStorage.setItem("user", JSON.stringify({ email: guestEmail, isGuest: true }));
-              router.push(`/menu?guest=1&email=${encodeURIComponent(guestEmail)}`);
             }
           }}
           bgStyle={darkMode ? darkBg : animeBg}

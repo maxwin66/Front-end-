@@ -241,10 +241,38 @@ const IndexPage = () => {
               window.location.href = "https://backend-cb98.onrender.com/auth/google";
             }
           }}
-          onGuest={() => {
-            // Generate guest email dan langsung ke menu
+          onGuest={async () => {
             const guestEmail = `guest_${Math.random().toString(36).substr(2, 9)}@guest.com`;
-            router.push(`/menu?guest=1&email=${encodeURIComponent(guestEmail)}`);
+            try {
+              // Panggil API guest login (sesuaikan dengan backend)
+              const response = await fetch('https://backend-cb98.onrender.com/api/guest-login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: guestEmail })
+              });
+              const data = await response.json();
+              if (data.token) {
+                sessionStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify({ email: guestEmail, isGuest: true }));
+                router.push(`/menu?guest=1&email=${encodeURIComponent(guestEmail)}`);
+              } else {
+                console.error('No token from guest login');
+                window.alert(
+                  lang === "id" ? "Gagal membuat sesi guest. Silakan coba lagi."
+                  : lang === "en" ? "Failed to create guest session. Please try again."
+                  : "ゲストセッションの作成に失敗しました。もう一度お試しください。"
+                );
+                router.push('/');
+              }
+            } catch (error) {
+              console.error('Guest login error:', error);
+              window.alert(
+                lang === "id" ? "Terjadi kesalahan. Silakan coba lagi."
+                : lang === "en" ? "An error occurred. Please try again."
+                : "エラーが発生しました。もう一度お試しください。"
+              );
+              router.push('/');
+            }
           }}
           bgStyle={darkMode ? darkBg : animeBg}
         />

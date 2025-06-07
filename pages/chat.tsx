@@ -37,4 +37,8 @@ const ChatPage = () => {
         isGuest={isGuest}
         credits={credits}
       />
-    
+    </>
+  );
+};
+
+export default ChatPage;

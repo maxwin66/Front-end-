@@ -223,14 +223,14 @@ const IndexPage: React.FC = () => {
               });
               console.log("Guest login response status:", response.status); // Debug log
               const data = await response.json();
-              if (data.token) {
+              if (response.ok && data.token) {
                 console.log("Guest login success, token:", data.token);
                 sessionStorage.setItem("token", data.token);
                 localStorage.setItem("user", JSON.stringify({ email: guestEmail, isGuest: true }));
                 router.push(`/menu?guest=1&email=${encodeURIComponent(guestEmail)}`);
               } else {
-                console.error("No token from guest login, response:", data);
-                throw new Error("No token received");
+                console.error("No token or invalid response, status:", response.status, "data:", data);
+                throw new Error("No token received or server error");
               }
             } catch (error) {
               console.error("Guest login error:", error);

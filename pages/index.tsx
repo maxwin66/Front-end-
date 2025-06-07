@@ -174,23 +174,13 @@ const IndexPage = () => {
     return () => { document.body.style.cursor = "auto"; };
   }, [step]);
 
-  // Handle transition to generate image page
-  const handleGenerateImage = () => {
-    setStep("generate-image");
-  };
-
-  // Handle back from generate image
-  const handleBackFromGenerate = () => {
-    setStep(email.toLowerCase().startsWith("guest") ? "guest" : "login");
-  };
-
   // --- HANDLE GENERATE IMAGE PAGE ---
   if (step === "generate-image") {
     return (
       <>
         <ThemeLangSwitcher />
         <GenerateImagePage 
-          onBack={handleBackFromGenerate}
+          onBack={() => setStep(email.toLowerCase().startsWith("guest") ? "guest" : "login")}
           email={email}
           credits={credits}
           onCreditsUpdate={setCredits}
@@ -321,7 +311,6 @@ const IndexPage = () => {
         isGuest={step === "guest" || (email && email.toLowerCase().startsWith("guest"))}
         credits={credits}
         bgStyle={darkMode ? darkBg : animeBg}
-        onGenerateImage={handleGenerateImage}
       />
     </>
   );

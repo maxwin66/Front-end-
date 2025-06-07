@@ -15,10 +15,10 @@ interface Props {
   credits: number;
 }
 
-const ChatInterface: React.FC<Props> = ({ 
-  email, 
-  isGuest, 
-  credits: initialCredits 
+const ChatInterface: React.FC<Props> = ({
+  email,
+  isGuest,
+  credits: initialCredits,
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
@@ -30,20 +30,21 @@ const ChatInterface: React.FC<Props> = ({
   const { theme, darkMode, lang } = useContext(UiContext);
 
   const animeBg = {
-    backgroundImage: "url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png')",
+    backgroundImage:
+      "url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png')",
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",
     backgroundAttachment: "fixed",
     minHeight: "100vh",
-    width: "100%"
+    width: "100%",
   };
 
   const darkBg = {
-    background: "linear-gradient(135deg,#0f172a 427%,#172554 800%)",
+    background: "linear-gradient(135deg, #0f172a 40%, #172554 100%)",
     minHeight: "100vh",
     width: "100%",
-    backgroundAttachment: "fixed"
+    backgroundAttachment: "fixed",
   };
 
   // Auto-scrolling effect
@@ -53,7 +54,7 @@ const ChatInterface: React.FC<Props> = ({
         const { scrollHeight, clientHeight } = chatContainerRef.current;
         chatContainerRef.current.scrollTo({
           top: scrollHeight - clientHeight,
-          behavior: 'smooth'
+          behavior: "smooth",
         });
       }
     };
@@ -65,20 +66,21 @@ const ChatInterface: React.FC<Props> = ({
 
   // Initialize credits and welcome message
   useEffect(() => {
-    // Set initial credits based on login type
     const initialCredits = isGuest ? 20 : 75;
     setCredits(initialCredits);
 
-    // Add welcome message
-    setMessages([{
-      role: "assistant",
-      content: lang === "id"
-        ? `Halo! Saya adalah AI Assistant yang siap membantu kamu. Kamu memiliki ${initialCredits} kredit.`
-        : lang === "en"
-          ? `Hello! I'm your AI Assistant ready to help. You have ${initialCredits} credits.`
-          : `こんにちは！私はあなたのAIアシスタントです。${initialCredits}クレジットがあります。`,
-      timestamp: new Date().toISOString()
-    }]);
+    setMessages([
+      {
+        role: "assistant",
+        content:
+          lang === "id"
+            ? `Halo! Saya adalah AI Assistant yang siap membantu kamu. Kamu memiliki ${initialCredits} kredit.`
+            : lang === "en"
+              ? `Hello! I'm your AI Assistant ready to help. You have ${initialCredits} credits.`
+              : `こんにちは！私はあなたのAIアシスタントです。${initialCredits}クレジットがあります。`,
+        timestamp: new Date().toISOString(),
+      },
+    ]);
   }, [isGuest, lang]);
 
   // Fetch chat history
@@ -87,83 +89,103 @@ const ChatInterface: React.FC<Props> = ({
       try {
         const token = sessionStorage.getItem("token");
         if (!token) {
-          console.error('No token found in sessionStorage');
-          setMessages(prev => [...prev, {
-            role: "assistant",
-            content: lang === "id"
-              ? "Sesi tidak valid. Silakan login kembali."
-              : lang === "en"
-                ? "Invalid session. Please log in again."
-              : "セッションが無効です。再度ログインしてください。",
-            timestamp: new Date().toISOString()
-          }]);
+          console.error("No token found in sessionStorage");
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content:
+                lang === "id"
+                  ? "Sesi tidak valid. Silakan login kembali."
+                  : lang === "en"
+                    ? "Invalid session. Please log in again."
+                    : "セッションが無効です。再度ログインしてください。",
+              timestamp: new Date().toISOString(),
+            },
+          ]);
           setTimeout(() => router.push("/"), 2000);
           return;
         }
 
-        console.log('Fetching history with token:', token);
+        console.log("Fetching history with token:", token);
         const response = await fetch(
-          `https://backend-cb98.onrender.com/api/history?user_email=${email}`,
-          { 
+          `https://backend-cb98.onrender.com/api/history?user_email=${encodeURIComponent(email)}`,
+          {
             credentials: "include",
             headers: {
-              "Authorization": token
-            }
+              Authorization: token,
+            },
           }
         );
-        
-        console.log('History API response status:', response.status);
+
+        console.log("History API response status:", response.status);
         if (response.ok) {
           const data = await response.json();
-          console.log('History API data:', data);
+          console.log("History API data:", data);
           if (Array.isArray(data.history)) {
-            setMessages(prev => [
+            setMessages((prev) => [
               ...prev,
               ...data.history.map((h: any) => ({
                 role: h.role || (h.question ? "user" : "assistant"),
                 content: h.question || h.answer,
-                timestamp: h.timestamp
-              }))
+                timestamp: h.timestamp,
+              })),
             ]);
-            if (typeof data.credits === 'number') {
+            if (typeof data.credits === "number") {
               setCredits(data.credits);
             }
           }
         } else if (response.status === 401) {
-          console.error('Unauthorized: Invalid or expired token');
-          setMessages(prev => [...prev, {
-            role: "assistant",
-            content: lang === "id"
-              ? "Sesi Anda tidak valid. Silakan login lagi."
-              : lang === "en"
-                ? "Your session is invalid. Please log in again."
-              : "セッションが終了しました。再度ログインしてください。",
-            timestamp: new Date().toISOString()
-          }]);
+          console.error("Unauthorized: Invalid or expired token");
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content:
+                lang === "id"
+                  ? "Sesi Anda tidak valid. Silakan login lagi."
+                  : lang === "en"
+                    ? "Your session is invalid. Please log in again."
+                    : "セッションが終了しました。再度ログインしてください。",
+              timestamp: new Date().toISOString(),
+            },
+          ]);
           setTimeout(() => router.push("/"), 2000);
         } else {
-          console.error('Unexpected history API response:', response.status, response.statusText);
-          setMessages(prev => [...prev, {
-            role: "assistant",
-            content: lang === "id"
-              ? "Gagal memuat riwayat chat. Silakan coba lagi."
-              : lang === "en"
-                ? "Failed to load chat history. Please try again."
-              : "チャット履歴の読み込みに失敗しました。もう一度お試しください。",
-            timestamp: new Date().toISOString()
-          }]);
+          console.error(
+            "Unexpected history API response:",
+            response.status,
+            response.statusText
+          );
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content:
+                lang === "id"
+                  ? "Gagal memuat riwayat chat. Silakan coba lagi."
+                  : lang === "en"
+                    ? "Failed to load chat history. Please try again."
+                    : "チャット履歴の読み込みに失敗しました。もう一度お試しください。",
+              timestamp: new Date().toISOString(),
+            },
+          ]);
         }
       } catch (error) {
-        console.error('Error fetching history:', error);
-        setMessages(prev => [...prev, {
-          role: "assistant",
-          content: lang === "id"
-            ? "Gagal memuat riwayat chat. Silakan coba lagi."
-            : lang === "en"
-              ? "Failed to load chat history. Please try again."
-            : "チャット履歴の読み込みに失敗しました。もう一度お試しください。",
-          timestamp: new Date().toISOString()
-        }]);
+        console.error("Error fetching history:", error);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              lang === "id"
+                ? "Gagal memuat riwayat chat. Silakan coba lagi."
+                : lang === "en"
+                  ? "Failed to load chat history. Please try again."
+                  : "チャット履歴の読み込みに失敗しました。もう一度お試しください。",
+            timestamp: new Date().toISOString(),
+          },
+        ]);
       }
     };
 
@@ -173,15 +195,19 @@ const ChatInterface: React.FC<Props> = ({
   const handleSend = async () => {
     if (!inputMessage.trim() || loading || credits <= 0) {
       if (credits <= 0) {
-        setMessages(prev => [...prev, {
-          role: "assistant",
-          content: lang === "id"
-            ? "Maaf, kredit Anda habis. Silakan login dengan Google untuk mendapatkan kredit lebih banyak."
-            : lang === "en"
-              ? "Sorry, you have no credits left. Please log in with Google for more credits."
-            : "申し訳ありません、クレジットが不足しています。Googleでログインしてクレジットを追加してください。",
-          timestamp: new Date().toISOString()
-        }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              lang === "id"
+                ? "Maaf, kredit Anda habis. Silakan login dengan Google untuk mendapatkan kredit lebih banyak."
+                : lang === "en"
+                  ? "Sorry, you have no credits left. Please log in with Google for more credits."
+                  : "申し訳ありません、クレジットが不足しています。Googleでログインしてクレジットを追加してください。",
+            timestamp: new Date().toISOString(),
+          },
+        ]);
       }
       return;
     }
@@ -189,90 +215,108 @@ const ChatInterface: React.FC<Props> = ({
     const userMessage = inputMessage.trim();
     const timestamp = new Date().toISOString();
     setInputMessage("");
-    setMessages(prev => [...prev, { 
-      role: "user", 
-      content: userMessage,
-      timestamp 
-    }]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "user",
+        content: userMessage,
+        timestamp,
+      },
+    ]);
     setLoading(true);
 
     try {
       const token = sessionStorage.getItem("token");
       if (!token) {
-        console.error('No token found in sessionStorage');
-        setMessages(prev => [...prev, {
-          role: "assistant",
-          content: lang === "id"
-            ? "Sesi tidak valid. Silakan login kembali."
-            : lang === "en"
-              ? "Invalid session. Please log in again."
-            : "セッションが無効です。再度ログインしてください。",
-          timestamp: new Date().toISOString()
-        }]);
+        console.error("No token found in sessionStorage");
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              lang === "id"
+                ? "Sesi tidak valid. Silakan login kembali."
+                : lang === "en"
+                  ? "Invalid session. Please log in again."
+                  : "セッションが無効です。再度ログインしてください。",
+            timestamp: new Date().toISOString(),
+          },
+        ]);
         setTimeout(() => router.push("/"), 2000);
         return;
       }
 
-      console.log('Sending chat with token:', token);
+      console.log("Sending chat with token:", token);
       const response = await fetch("https://backend-cb98.onrender.com/api/chat", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          "Authorization": token
+          Authorization: token,
         },
         credentials: "include",
         body: JSON.stringify({
           user_email: email,
           message: userMessage,
           model_select: model,
-          timestamp: timestamp
-        })
+          timestamp: timestamp,
+        }),
       });
 
-      console.log('Chat API response status:', response.status);
+      console.log("Chat API response status:", response.status);
       if (response.status === 401) {
-        console.error('Unauthorized: Invalid or expired token');
-        setMessages(prev => [...prev, {
-          role: "assistant",
-          content: lang === "id"
-            ? "Sesi Anda tidak valid. Silakan login lagi."
-            : lang === "en"
-              ? "Your session is invalid. Please log in again."
-            : "セッションが終了しました。再度ログインしてください。",
-          timestamp: new Date().toISOString()
-        }]);
+        console.error("Unauthorized: Invalid or expired token");
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              lang === "id"
+                ? "Sesi Anda tidak valid. Silakan login lagi."
+                : lang === "en"
+                  ? "Your session is invalid. Please log in again."
+                  : "セッションが終了しました。再度ログインしてください。",
+            timestamp: new Date().toISOString(),
+          },
+        ]);
         setTimeout(() => router.push("/"), 2000);
         return;
       }
 
       const data = await response.json();
-      console.log('Chat API data:', data);
-      
+      console.log("Chat API data:", data);
+
       if (data.reply) {
-        setMessages(prev => [...prev, { 
-          role: "assistant", 
-          content: data.reply,
-          timestamp: new Date().toISOString()
-        }]);
-        if (typeof data.credits === 'number') {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: data.reply,
+            timestamp: new Date().toISOString(),
+          },
+        ]);
+        if (typeof data.credits === "number") {
           setCredits(data.credits);
         } else {
-          setCredits(prev => Math.max(0, prev - 1));
+          setCredits((prev) => Math.max(0, prev - 1));
         }
       } else {
         throw new Error("No reply found in API response");
       }
     } catch (error) {
       console.error("Chat error:", error);
-      setMessages(prev => [...prev, {
-        role: "assistant",
-        content: lang === "id"
-          ? "Maaf, terjadi kesalahan. Silakan coba lagi nanti."
-          : lang === "en"
-            ? "Sorry, an error occurred. Please try again later."
-          : "申し訳ありません、エラーが発生しました。後でもお試しください。",
-        timestamp: new Date().toISOString()
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            lang === "id"
+              ? "Maaf, terjadi kesalahan. Silakan coba lagi nanti."
+              : lang === "en"
+                ? "Sorry, an error occurred. Please try again later."
+                : "申し訳ありません、エラーが発生しました。後でもお試しください。",
+          timestamp: new Date().toISOString(),
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -281,11 +325,8 @@ const ChatInterface: React.FC<Props> = ({
   return (
     <div className="min-h-screen flex flex-col relative">
       {/* Background wrapper */}
-      <div 
-        className="fixed inset-0 z-0" 
-        style={darkMode ? darkBg : animeBg}
-      />
-      
+      <div className="fixed inset-0 z-0" style={darkMode ? darkBg : animeBg} />
+
       {/* Overlay */}
       <div className="fixed inset-0 bg-gradient-to-b from-black/20 to-blue-200/20 dark:from-black/30 dark:to-black/50 z-0" />
 
@@ -299,21 +340,23 @@ const ChatInterface: React.FC<Props> = ({
                 <Image
                   src="/logo.png"
                   alt="Logo"
-                  :width={40}
-                  :height={40}
+                  width={40}
+                  height={40}
                   className="rounded-full ring-2 ring-blue-500/50 p-0.5"
                 />
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
                     Credits:
                   </span>
-                  <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                    credits > 10 
-                      ? 'bg-green-500 text-white' 
-                      : credits > 0 
-                        ? 'bg-yellow-500 text-white' 
-                        : 'bg-red-500 text-white'
-                  }`}>
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-bold ${
+                      credits > 10
+                        ? "bg-green-500 text-white"
+                        : credits > 0
+                          ? "bg-yellow-500 text-white"
+                          : "bg-red-500 text-white"
+                    }`}
+                  >
                     {credits}
                   </span>
                 </div>
@@ -338,8 +381,8 @@ const ChatInterface: React.FC<Props> = ({
           </div>
         </div>
 
-        <!-- Chat Messages -->
-        <div 
+        {/* Chat Messages */}
+        <div
           ref={chatContainerRef}
           className="flex-1 overflow-y-auto p-4 scroll-smooth"
         >
@@ -366,9 +409,18 @@ const ChatInterface: React.FC<Props> = ({
               <div className="flex justify-start">
                 <div className="bg-white/80 dark:bg-gray-800/80 rounded-2xl px-4 py-2.5 shadow-lg backdrop-blur-sm border border-gray-100/20">
                   <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <div
+                      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+                      style={{ animationDelay: "0ms" }}
+                    />
+                    <div
+                      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+                      style={{ animationDelay: "150ms" }}
+                    />
+                    <div
+                      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
+                      style={{ animationDelay: "300ms" }}
+                    />
                   </div>
                 </div>
               </div>
@@ -376,7 +428,7 @@ const ChatInterface: React.FC<Props> = ({
           </div>
         </div>
 
-        <!-- Input Area -->
+        {/* Input Area */}
         <div className="bg-white/80 dark:bg-gray-800/80 shadow-lg backdrop-blur-md border-t border-gray-100/20 p-4">
           <div className="max-w-3xl mx-auto flex space-x-4">
             <input
@@ -385,7 +437,7 @@ const ChatInterface: React.FC<Props> = ({
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSend()}
               placeholder={
-                credits <= 0 
+                credits <= 0
                   ? lang === "id"
                     ? "Kredit Anda habis..."
                     : lang === "en"
@@ -412,11 +464,21 @@ const ChatInterface: React.FC<Props> = ({
               {loading ? (
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-white rounded-full animate-bounce" />
-                  <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: "150ms"}} />
-                  <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{animationDelay: "300ms"}} />
+                  <div
+                    className="w-2 h-2 bg-white rounded-full animate-bounce"
+                    style={{ animationDelay: "150ms" }}
+                  />
+                  <div
+                    className="w-2 h-2 bg-white rounded-full animate-bounce"
+                    style={{ animationDelay: "300ms" }}
+                  />
                 </div>
+              ) : lang === "id" ? (
+                "Kirim"
+              ) : lang === "en" ? (
+                "Send"
               ) : (
-                lang === "id" ? "Kirim" : lang === "en" ? "Send" : "送信"
+                "送信"
               )}
             </button>
           </div>
@@ -427,4 +489,3 @@ const ChatInterface: React.FC<Props> = ({
 };
 
 export default ChatInterface;
-<xaiArtifact artifact_id="5bf7f17d57-8bef-b420-9c2b-5e873ae55d0f" artifact_version_id="f6d22c7a-4b3e-f64d-b0ac-9" />

@@ -308,7 +308,7 @@ const ChatInterface: React.FC<Props> = ({
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-lg border-b border-white/20">
           <div className="max-w-7xl mx-auto px-4 py-3">
             <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-4 ml-10"> {/* Tambah margin kiri */}
+              <div className="flex items-center space-x-4 ml-10">
                 <Image
                   src="/logo.png"
                   alt="Logo"

@@ -29,7 +29,6 @@ const ChatInterface: React.FC<Props> = ({
   const router = useRouter();
   const { theme, darkMode, lang } = useContext(UiContext);
 
-  // Background styles
   const animeBg = {
     backgroundImage: "url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png')",
     backgroundSize: "cover",

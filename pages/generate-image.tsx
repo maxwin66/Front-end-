@@ -2,6 +2,14 @@ import { useState, useContext, useEffect } from "react";
 import { UiContext } from "./_app";
 import { useRouter } from "next/router";
 
+// Define Props interface
+interface Props {
+  onBack: () => void;
+  email: string;
+  credits: number;
+  onCreditsUpdate: (newCredits: number) => void;
+}
+
 const texts = {
   title: "Buat Gambar AI",
   placeholder: "Masukkan deskripsi gambar yang kamu inginkan...",

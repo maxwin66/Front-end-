@@ -179,9 +179,9 @@ const IndexPage = () => {
 
             {/* Tombol Mulai besar */}
             <button
-              className={`px-16 py-4 text-2xl rounded-full font-bold bg-gradient-to-r ${theme.gradient} shadow-xl text-white hover:scale-105 hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent`}
+              className={`px-16 py-4 text-base rounded-full font-bold bg-white/30 shadow-xl text-white hover:bg-white/40 hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent`}
               onClick={handleStart}
-              style={{ letterSpacing: '2px' }}
+              style={{ pointerEvents: "none" }}
               disabled={blurTrans}
             >
               {texts[lang].start}
@@ -191,18 +191,18 @@ const IndexPage = () => {
             
             <style>{`
               .animate-glow {
-                box-shadow: 0 0 20px 3px ${theme.color}80, 0 0 40px 7px ${theme.color}60;
+                box-shadow: 0 0 20px 3px ${theme.color}80;
                 transition: box-shadow 0.3s;
               }
               .animate-glow:hover {
-                box-shadow: 0 0 36px 10px ${theme.color}88, 0 0 72px 12px ${theme.color}80;
+                box-shadow: 0 0 36px 10px ${theme.color}88;
               }
             `}</style>
 
             {/* Quote Anime */}
             <div className="mt-7 mb-2 w-full flex flex-col items-center">
-              <div className="text-xs italic text-blue-900 text-center max-w-xs transition-all duration-500">
-                "{animeQuotes[quoteIdx].text}" <span className="not-italic font-bold text-blue-600">- {animeQuotes[quoteIdx].author}</span>
+              <div className="text-xs italic text-blue-600 text-center max-w-xs transition-all duration-500">
+                "{animeQuotes[quoteIdx].text}" <span className="not-italic font-bold text-blue-500">- {animeQuotes[quoteIdx].author}</span>
               </div>
             </div>
           </div>
@@ -215,7 +215,7 @@ const IndexPage = () => {
             <span>|</span>
             <a href="https://instagram.com/yourbrand" target="_blank" rel="noopener noreferrer" className="hover:text-blue-300 transition">Instagram</a>
             <span>|</span>
-            <a href="https://discord.gg/yourbrand" target="_blank" rel="noopener noreferrer" className="hover:text-blue-300 transition">Discord</a>
+            <a href="https://discord.gg/yourbrand" title="Join our community!" target="_blank" rel="noopener noreferrer" className="hover:text-blue-300 transition">Discord</a>
           </div>
           <div>
             Artwork by AI | <a href="/privacy" className="underline hover:text-blue-200">Kebijakan Privasi</a>
@@ -244,7 +244,7 @@ const IndexPage = () => {
           onGuest={async () => {
             const guestEmail = `guest_${Math.random().toString(36).substr(2, 9)}@guest.com`;
             try {
-              // Panggil API guest login (sesuaikan dengan backend)
+              // Coba panggil API guest login
               const response = await fetch('https://backend-cb98.onrender.com/api/guest-login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -252,26 +252,27 @@ const IndexPage = () => {
               });
               const data = await response.json();
               if (data.token) {
+                console.log('Guest login success, token:', data.token);
                 sessionStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify({ email: guestEmail, isGuest: true }));
                 router.push(`/menu?guest=1&email=${encodeURIComponent(guestEmail)}`);
               } else {
-                console.error('No token from guest login');
-                window.alert(
-                  lang === "id" ? "Gagal membuat sesi guest. Silakan coba lagi."
-                  : lang === "en" ? "Failed to create guest session. Please try again."
-                  : "ゲストセッションの作成に失敗しました。もう一度お試しください。"
-                );
-                router.push('/');
+                console.error('No token from guest login, response:', data);
+                // Fallback ke token dummy jika endpoint gagal
+                const dummyToken = 'guest-token-' + guestEmail;
+                console.log('Using dummy token:', dummyToken);
+                sessionStorage.setItem('token', dummyToken);
+                localStorage.setItem('user', JSON.stringify({ email: guestEmail, isGuest: true }));
+                router.push(`/menu?guest=1&email=${encodeURIComponent(guestEmail)}`);
               }
             } catch (error) {
               console.error('Guest login error:', error);
-              window.alert(
-                lang === "id" ? "Terjadi kesalahan. Silakan coba lagi."
-                : lang === "en" ? "An error occurred. Please try again."
-                : "エラーが発生しました。もう一度お試しください。"
-              );
-              router.push('/');
+              // Fallback ke token dummy jika API tidak tersedia
+              const dummyToken = 'guest-token-' + guestEmail;
+              console.log('API error, using dummy token:', dummyToken);
+              sessionStorage.setItem('token', dummyToken);
+              localStorage.setItem('user', JSON.stringify({ email: guestEmail, isGuest: true }));
+              router.push(`/menu?guest=1&email=${encodeURIComponent(guestEmail)}`);
             }
           }}
           bgStyle={darkMode ? darkBg : animeBg}

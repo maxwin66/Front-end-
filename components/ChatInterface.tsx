@@ -26,6 +26,7 @@ const ChatInterface: React.FC<Props> = ({
   const [credits, setCredits] = useState(initialCredits);
   const [model, setModel] = useState("OpenRouter (Grok 3 Mini Beta)");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { theme, darkMode, lang } = useContext(UiContext);
 
@@ -46,34 +47,70 @@ const ChatInterface: React.FC<Props> = ({
     backgroundAttachment: "fixed"
   };
 
+  // Auto-scrolling effect
   useEffect(() => {
-    const fetchHistory = async () => {
+    const scrollToBottom = () => {
+      if (chatContainerRef.current) {
+        const { scrollHeight, clientHeight } = chatContainerRef.current;
+        chatContainerRef.current.scrollTo({
+          top: scrollHeight - clientHeight,
+          behavior: 'smooth'
+        });
+      }
+    };
+
+    scrollToBottom();
+    // Also scroll when new messages are added or when loading changes
+    const timeoutId = setTimeout(scrollToBottom, 100); // Additional delay for content to render
+    return () => clearTimeout(timeoutId);
+  }, [messages, loading]);
+
+  // Set initial credits based on login type
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (email && !email.toLowerCase().startsWith("guest")) {
+        setCredits(75); // Gmail login
+      } else if (isGuest || (email && email.toLowerCase().startsWith("guest"))) {
+        setCredits(20); // Guest mode
+      }
+    }
+  }, [email, isGuest]);
+
+  // Fetch chat history with retry logic
+  useEffect(() => {
+    const fetchHistory = async (retryCount = 0) => {
       try {
         const response = await fetch(
           `https://backend-cb98.onrender.com/api/history?user_email=${email}`,
-          { credentials: "include" }
+          { 
+            credentials: "include",
+            signal: AbortSignal.timeout(5000)
+          }
         );
+        
         if (response.ok) {
           const data = await response.json();
-          setMessages(
-            data.history.map((h: any) => [
-              { role: "user", content: h.question },
-              { role: "assistant", content: h.answer },
-            ]).flat()
-          );
+          if (Array.isArray(data.history)) {
+            setMessages(
+              data.history.map((h: any) => [
+                { role: "user", content: h.question },
+                { role: "assistant", content: h.answer },
+              ]).flat()
+            );
+          }
+        } else if (retryCount < 3) {
+          setTimeout(() => fetchHistory(retryCount + 1), 1000 * (retryCount + 1));
         }
       } catch (error) {
         console.error("Error fetching history:", error);
+        if (retryCount < 3) {
+          setTimeout(() => fetchHistory(retryCount + 1), 1000 * (retryCount + 1));
+        }
       }
     };
+
     if (email) fetchHistory();
   }, [email]);
-
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages]);
 
   const handleSend = async () => {
     if (!inputMessage.trim() || loading) return;
@@ -86,39 +123,51 @@ const ChatInterface: React.FC<Props> = ({
     try {
       const response = await fetch("https://backend-cb98.onrender.com/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}` 
+        },
         body: JSON.stringify({
           user_email: email,
           message: userMessage,
           model_select: model
-        })
+        }),
+        signal: AbortSignal.timeout(15000)
       });
 
-      const data = await response.json();
-      if (response.ok) {
-        setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
-        setCredits(parseInt(data.credits));
-      } else {
-        if (data.error === "NOT_ENOUGH_CREDITS") {
-          setMessages(prev => [
-            ...prev,
-            {
-              role: "assistant",
-              content: "Maaf, kredit kamu tidak cukup! Silakan top up atau login dengan Google untuk kredit tambahan."
-            }
-          ]);
-        } else {
-          throw new Error(data.error);
-        }
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
+      
+      if (data.reply) {
+        setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+        if (typeof data.credits === 'number') {
+          setCredits(data.credits);
+        }
+      } else {
+        throw new Error("No reply from AI");
+      }
+
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("Chat error:", error);
+      
+      let errorMessage = "Maaf, terjadi kesalahan. ";
+      
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        errorMessage += "Koneksi terputus. Periksa internet Anda.";
+      } else if (error instanceof Error && error.message.includes("timeout")) {
+        errorMessage += "Server tidak merespons. Silakan coba lagi.";
+      } else if (error instanceof Error && error.message === "No reply from AI") {
+        errorMessage += "AI tidak memberikan respons. Coba pertanyaan lain.";
+      } else {
+        errorMessage += "Silakan coba lagi nanti.";
+      }
+
       setMessages(prev => [
         ...prev,
-        {
-          role: "assistant",
-          content: "Maaf, terjadi kesalahan. Silakan coba lagi nanti."
-        }
+        { role: "assistant", content: errorMessage }
       ]);
     } finally {
       setLoading(false);
@@ -138,7 +187,7 @@ const ChatInterface: React.FC<Props> = ({
 
       {/* Content wrapper */}
       <div className="relative flex flex-col min-h-screen z-10">
-        {/* Header */}
+        {/* Header - Simplified */}
         <div className="bg-white/80 dark:bg-gray-800/90 backdrop-blur-md shadow-lg border-b border-white/20">
           <div className="max-w-7xl mx-auto px-4 py-3">
             <div className="flex justify-between items-center">
@@ -150,18 +199,13 @@ const ChatInterface: React.FC<Props> = ({
                   height={40}
                   className="rounded-full ring-2 ring-blue-500 p-0.5"
                 />
-                <div>
-                  <h1 className="font-bold text-gray-800 dark:text-white text-lg">
-                    {isGuest ? "Guest Mode" : email}
-                  </h1>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600 dark:text-gray-300">
-                      Credits:
-                    </span>
-                    <span className="px-2 py-0.5 bg-blue-500 text-white text-xs font-bold rounded-full">
-                      {credits}
-                    </span>
-                  </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    Credits:
+                  </span>
+                  <span className="px-2 py-0.5 bg-blue-500 text-white text-xs font-bold rounded-full">
+                    {credits}
+                  </span>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
@@ -184,8 +228,11 @@ const ChatInterface: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-4">
+        {/* Chat Messages with auto-scroll */}
+        <div 
+          ref={chatContainerRef}
+          className="flex-1 overflow-y-auto p-4 scroll-smooth"
+        >
           <div className="max-w-3xl mx-auto space-y-4">
             {messages.map((message, index) => (
               <div
@@ -216,7 +263,6 @@ const ChatInterface: React.FC<Props> = ({
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
         </div>
 

@@ -3,7 +3,8 @@ import { useRouter } from "next/router";
 import Image from "next/image";
 
 interface Props {
-  onGoogle?: () => void;
+  onGoogle: () => void;
+  onGuest: () => void; // Tambahkan prop onGuest
   bgStyle?: React.CSSProperties;
 }
 
@@ -20,15 +21,16 @@ const LANGUAGES: Language[] = [
   { code: 'jp', name: 'Japanese', flag: '🇯🇵', local: '日本語' }
 ];
 
-const HomeSelect: React.FC<Props> = ({ onGoogle }) => {
+const HomeSelect: React.FC<Props> = ({ onGoogle, onGuest }) => {
   const router = useRouter();
   const [theme, setTheme] = useState("light");
   const [showLanguages, setShowLanguages] = useState(false);
   const [currentLang, setCurrentLang] = useState<Language>(LANGUAGES[0]);
 
   const handleGuest = () => {
-    console.log("Guest button clicked!");
-    router.push("/menu?guest=1");
+    // Generate guest email dan langsung redirect ke chat
+    const guestEmail = `guest_${Math.random().toString(36).substr(2, 9)}@guest.com`;
+    router.push(`/chat?email=${guestEmail}&openchat=1`);
   };
 
   const toggleTheme = () => {

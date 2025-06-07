@@ -1,13 +1,11 @@
 import { useState, useEffect, useContext } from "react";
 import { useRouter } from "next/router";
 import HomeSelect from "../components/HomeSelect";
-import ChatInterface from "../components/ChatInterface";
 import ParticlesBackground from "../components/ParticlesBackground";
 import ThemeLangSwitcher from "../components/ThemeLangSwitcher";
-import GenerateImagePage from "./generate-image";
 import { UiContext } from "./_app";
 
-// Quotes anime inspiratif
+// Quotes anime inspiratif 
 const animeQuotes = [
   { text: "Impian itu bukan untuk dikejar, tapi untuk diwujudkan.", author: "One Piece" },
   { text: "Tidak apa-apa untuk menangis, tapi bangkitlah setelahnya.", author: "Naruto" },
@@ -24,7 +22,7 @@ const texts = {
     carousel: [
       "🎁 Gratis 75 Kredit untuk Pengguna Baru!",
       "🚀 Login dengan Google atau Sebagai Tamu",
-      "💬 Chat AI Karakter Anime 24/7",
+      "💬 Chat AI Karakter Anime 24/7", 
       "✨ Privasi Aman & Tampilan Premium"
     ],
     version: "Versi",
@@ -32,7 +30,7 @@ const texts = {
     by: "oleh"
   },
   en: {
-    start: "Start",
+    start: "Start", 
     carousel: [
       "🎁 75 Free Credits for New Users!",
       "🚀 Login with Google or as Guest",
@@ -51,7 +49,7 @@ const texts = {
       "💬 24時間アニメAIチャット",
       "✨ 安全なプライバシー＆プレミアムデザイン"
     ],
-    version: "バージョン",
+    version: "バージョン", 
     developed: "開発：",
     by: ""
   }
@@ -67,60 +65,19 @@ const darkBg = {
   minHeight: "100vh"
 };
 
-// Interface untuk page state
-interface PageState {
-  step: "start" | "select" | "guest" | "login" | "generate-image";
-  credits: number;
-  email: string;
-}
-
 const IndexPage = () => {
   const router = useRouter();
-  const [step, setStep] = useState<PageState["step"]>("start");
-  const [credits, setCredits] = useState(0);
-  const [email, setEmail] = useState("");
+  const [step, setStep] = useState<"start" | "select">("start");
   const [featureIdx, setFeatureIdx] = useState(0);
   const [carouselProg, setCarouselProg] = useState(0);
-  const [blurTrans, setBlurTrans] = useState(false);
+  const [blurTrans, setBlurTrans] = useState(false); 
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
   const [quoteIdx, setQuoteIdx] = useState(Math.floor(Math.random() * animeQuotes.length));
 
   // Global UI state
   const { theme, darkMode, lang } = useContext(UiContext);
 
-  // Gabungkan semua logic guest/login dalam satu useEffect:
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const openchat = params.get("openchat");
-      const gotEmail = params.get("email");
-      const isGuestEmail = gotEmail && gotEmail.toLowerCase().startsWith("guest");
-      if (openchat === "1") {
-        if (gotEmail && !isGuestEmail) {
-          setEmail(gotEmail);
-          setStep("login");
-          setCredits(75);
-        } else {
-          setStep("guest");
-          setCredits(20);
-          setEmail(isGuestEmail ? gotEmail : "");
-        }
-        window.history.replaceState({}, document.title, "/");
-      } else if (gotEmail && !isGuestEmail) {
-        setEmail(gotEmail);
-        setStep("login");
-        setCredits(75);
-        window.history.replaceState({}, document.title, "/");
-      } else if (gotEmail && isGuestEmail) {
-        setStep("guest");
-        setCredits(20);
-        setEmail(gotEmail);
-        window.history.replaceState({}, document.title, "/");
-      }
-    }
-  }, []); // hanya sekali saat mount
-
-  // Parallax background effect (mouse move)
+  // Parallax background effect
   useEffect(() => {
     if (step !== "start") return;
     const listener = (e: MouseEvent) => {
@@ -149,7 +106,7 @@ const IndexPage = () => {
     }
   }, [step, lang]);
 
-  // Pergantian quote anime (tiap 10 detik)
+  // Quote anime rotation
   useEffect(() => {
     if (step !== "start") return;
     const interval = setInterval(() => {
@@ -158,7 +115,7 @@ const IndexPage = () => {
     return () => clearInterval(interval);
   }, [step]);
 
-  // Cinematic Transisi
+  // Cinematic transition to select screen
   const handleStart = () => {
     setBlurTrans(true);
     setTimeout(() => {
@@ -167,27 +124,12 @@ const IndexPage = () => {
     }, 450);
   };
 
-  // Custom cursor effect (hanya di halaman depan)
+  // Custom cursor
   useEffect(() => {
     if (step !== "start") return;
     document.body.style.cursor = "url('/star-cursor.png'), auto";
     return () => { document.body.style.cursor = "auto"; };
   }, [step]);
-
-  // --- HANDLE GENERATE IMAGE PAGE ---
-  if (step === "generate-image") {
-    return (
-      <>
-        <ThemeLangSwitcher />
-        <GenerateImagePage 
-          onBack={() => setStep(email.toLowerCase().startsWith("guest") ? "guest" : "login")}
-          email={email}
-          credits={credits}
-          onCreditsUpdate={setCredits}
-        />
-      </>
-    );
-  }
 
   // --- HALAMAN DEPAN ---
   if (step === "start") {
@@ -200,7 +142,6 @@ const IndexPage = () => {
             : { ...animeBg, backgroundPosition: `${50 + parallax.x}% ${50 + parallax.y}%` }
         }
       >
-        {/* Partikel hanya di halaman start */}
         <ParticlesBackground darkMode={darkMode} />
         <ThemeLangSwitcher />
 
@@ -221,7 +162,7 @@ const IndexPage = () => {
 
         {/* Card + Tombol Mulai */}
         <div className="flex flex-1 items-center justify-center">
-          <div className={`bg-white/30 ${darkMode ? "bg-opacity-10" : "backdrop-blur-2xl"} rounded-3xl shadow-2xl p-8 flex flex-col items-center min-w-[320px] max-w-[94vw] w-full mx-2 border border-white/20`}>
+          <div className={`bg-white/30 ${darkMode ? "bg-opacity-10" : "backdrop-blur-2xl"} rounded-3xl shadow-2xl p-8 flex flex-col items-center min-w-[320px] max-w-[94vw] w-full mx-2 border border-blue-200/50 dark:border-slate-600/30 relative animate-glow`}>
             {/* Carousel fitur */}
             <div className="mb-6 w-full">
               <div className="text-md" style={{ color: theme.color, fontWeight: 700, textAlign: "center" }}>
@@ -235,16 +176,19 @@ const IndexPage = () => {
                 />
               </div>
             </div>
+
             {/* Tombol Mulai besar */}
             <button
-              className={`px-16 py-4 text-2xl rounded-full font-bold bg-gradient-to-r ${theme.gradient} shadow-xl text-white hover:scale-105 hover:shadow-2xl transition-all duration-300 focus:outline-none animate-glow`}
+              className={`px-16 py-4 text-2xl rounded-full font-bold bg-gradient-to-r ${theme.gradient} shadow-xl text-white hover:scale-105 hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent`}
               onClick={handleStart}
               style={{ letterSpacing: '2px' }}
               disabled={blurTrans}
             >
               {texts[lang].start}
             </button>
+
             {blurTrans && <div className="absolute inset-0 bg-white/60 backdrop-blur-md rounded-3xl transition-all duration-300" />}
+            
             <style>{`
               .animate-glow {
                 box-shadow: 0 0 20px 3px ${theme.color}80, 0 0 40px 7px ${theme.color}60;
@@ -284,7 +228,7 @@ const IndexPage = () => {
     );
   }
 
-  // --- HALAMAN SELECT (partikel tetap tampil) ---
+  // --- LOGIN/GUEST SELECT PAGE ---
   if (step === "select") {
     return (
       <>
@@ -292,15 +236,15 @@ const IndexPage = () => {
         <ThemeLangSwitcher />
         <HomeSelect
           onGoogle={() => {
+            // Redirect ke Google OAuth
             if (typeof window !== "undefined") {
               window.location.href = "https://backend-cb98.onrender.com/auth/google";
             }
           }}
           onGuest={() => {
+            // Generate guest email dan langsung ke menu
             const guestEmail = `guest_${Math.random().toString(36).substr(2, 9)}@guest.com`;
-            setEmail(guestEmail);
-            setCredits(20);
-            setStep("guest");
+            router.push(`/menu?guest=1&email=${encodeURIComponent(guestEmail)}`);
           }}
           bgStyle={darkMode ? darkBg : animeBg}
         />
@@ -308,17 +252,7 @@ const IndexPage = () => {
     );
   }
 
-  // --- HALAMAN CHAT (TANPA partikel, tapi theme/darkmode/lang tetap) ---
-  return (
-    <>
-      <ThemeLangSwitcher />
-      <ChatInterface
-        email={email}
-        isGuest={step === "guest" || (email && email.toLowerCase().startsWith("guest"))}
-        credits={credits}
-      />
-    </>
-  );
+  return null;
 };
 
 export default IndexPage;

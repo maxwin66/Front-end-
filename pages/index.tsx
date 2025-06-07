@@ -310,7 +310,6 @@ const IndexPage = () => {
         email={email}
         isGuest={step === "guest" || (email && email.toLowerCase().startsWith("guest"))}
         credits={credits}
-        bgStyle={darkMode ? darkBg : animeBg}
       />
     </>
   );

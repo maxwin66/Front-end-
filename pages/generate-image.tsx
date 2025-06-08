@@ -41,15 +41,16 @@ const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits: initialCre
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [credits, setCredits] = useState(initialCredits); // State lokal buat credits
+  const [credits, setCredits] = useState(initialCredits);
   const router = useRouter();
 
-  // Validasi kredit dan sinkronisasi dengan props
+  // Sync credits with props
   useEffect(() => {
-    setCredits(initialCredits); // Update credits kalau props berubah
+    console.log("Syncing credits:", initialCredits); // Debug log
+    setCredits(initialCredits);
   }, [initialCredits]);
 
-  // Validasi kredit
+  // Validation
   const canGenerate = credits >= 10 && !loading && prompt.trim().length > 0;
 
   const handleGenerate = async () => {
@@ -63,6 +64,7 @@ const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits: initialCre
     setResult(null);
 
     try {
+      console.log("Sending request to /api/generate-image with prompt:", prompt, "email:", email);
       const response = await fetch("https://backend-cb98.onrender.com/api/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -72,6 +74,7 @@ const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits: initialCre
         }),
       });
 
+      console.log("API response status:", response.status); // Debug log
       const data = await response.json();
 
       if (!response.ok) {
@@ -81,6 +84,7 @@ const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits: initialCre
       setResult(data.image);
       onCreditsUpdate(parseInt(data.credits));
     } catch (err: any) {
+      console.error("API error:", err.message);
       setError(err.message);
     } finally {
       setLoading(false);

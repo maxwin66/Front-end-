@@ -27,6 +27,8 @@ const texts = {
   by: "oleh",
 };
 
+const BACKEND_URL = "https://backend-cb98.onrender.com";
+
 const animeBg = {
   background: "url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png') center/cover no-repeat",
   minHeight: "100vh",
@@ -47,6 +49,12 @@ const IndexPage: React.FC = () => {
   const [quoteIdx, setQuoteIdx] = useState(Math.floor(Math.random() * animeQuotes.length));
 
   const { darkMode } = useContext(UiContext);
+
+  useEffect(() => {
+    // Clear any existing session data
+    sessionStorage.removeItem('token');
+    localStorage.removeItem('user');
+  }, []);
 
   useEffect(() => {
     if (step !== "start") return;
@@ -83,16 +91,6 @@ const IndexPage: React.FC = () => {
     return () => clearInterval(interval);
   }, [step]);
 
-  const handleStart = () => {
-    console.log("Start button clicked, blurTrans:", blurTrans);
-    setBlurTrans(true);
-    setTimeout(() => {
-      console.log("Transition complete, setting step to select");
-      setBlurTrans(false);
-      setStep("select");
-    }, 450);
-  };
-
   useEffect(() => {
     if (step !== "start") return;
     document.body.style.cursor = "url('/star-cursor.png'), auto";
@@ -100,6 +98,14 @@ const IndexPage: React.FC = () => {
       document.body.style.cursor = "auto";
     };
   }, [step]);
+
+  const handleStart = () => {
+    setBlurTrans(true);
+    setTimeout(() => {
+      setBlurTrans(false);
+      setStep("select");
+    }, 450);
+  };
 
   if (step === "start") {
     return (
@@ -126,9 +132,7 @@ const IndexPage: React.FC = () => {
         </div>
 
         <div className="flex flex-1 items-center justify-center">
-          <div
-            className="bg-white/30 ${darkMode ? 'bg-opacity-10' : 'backdrop-blur-2xl'} rounded-3xl shadow-2xl p-8 flex flex-col items-center min-w-[320px] max-w-[94vw] w-full mx-2 border border-blue-200/50 dark:border-slate-600/30 relative animate-glow"
-          >
+          <div className={`bg-white/30 ${darkMode ? 'bg-opacity-10' : 'backdrop-blur-2xl'} rounded-3xl shadow-2xl p-8 flex flex-col items-center min-w-[320px] max-w-[94vw] w-full mx-2 border border-blue-200/50 dark:border-blue-500/20 relative animate-glow`}>
             <div className="mb-6 w-full">
               <div className="text-md" style={{ color: "#38bdf8", fontWeight: 700, textAlign: "center" }}>
                 {texts.carousel[featureIdx]}
@@ -142,9 +146,9 @@ const IndexPage: React.FC = () => {
             </div>
 
             <button
-              className="px-16 py-4 text-2xl rounded-full font-bold bg-gradient-to-r from-blue-400 to-sky-400 shadow-xl text-white hover:scale-105 hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent"
               onClick={handleStart}
               disabled={blurTrans}
+              className="px-16 py-4 text-2xl rounded-full font-bold bg-gradient-to-r from-blue-400 to-sky-400 shadow-xl text-white hover:scale-105 hover:shadow-2xl transition-all duration-300 focus:outline-none disabled:opacity-50"
             >
               {texts.start}
             </button>
@@ -152,16 +156,6 @@ const IndexPage: React.FC = () => {
             {blurTrans && (
               <div className="absolute inset-0 bg-white/60 backdrop-blur-md rounded-3xl transition-all duration-300" />
             )}
-
-            <style>{`
-              .animate-glow {
-                box-shadow: 0 0 20px 3px #38bdf880, 0 0 40px 7px #38bdf860;
-                transition: box-shadow 0.3s;
-              }
-              .animate-glow:hover {
-                box-shadow: 0 0 36px 10px #38bdf888, 0 0 72px 12px #38bdf880;
-              }
-            `}</style>
 
             <div className="mt-7 mb-2 w-full flex flex-col items-center">
               <div className="text-xs italic text-blue-900 text-center max-w-xs transition-all duration-500">
@@ -210,41 +204,33 @@ const IndexPage: React.FC = () => {
         <HomeSelect
           onGoogle={() => {
             if (typeof window !== "undefined") {
-              window.location.href = "https://backend-cb98.onrender.com/auth/google";
+              window.location.href = `${BACKEND_URL}/auth/google`;
             }
           }}
           onGuest={async () => {
-            const guestEmail = `guest_${Math.random().toString(36).substr(2, 9)}@guest.com`;
+            const guestEmail = `guest_${Math.random().toString(36).substr(2, 9)}@guest.kugy.ai`;
             try {
-              const response = await fetch("https://backend-cb98.onrender.com/api/guest-login", {
+              const response = await fetch(`${BACKEND_URL}/api/guest-login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: guestEmail }),
               });
-              console.log("Guest login response status:", response.status); // Debug log
+              
               const data = await response.json();
               if (response.ok && data.token) {
-                console.log("Guest login success, token:", data.token, "credits:", data.credits);
                 sessionStorage.setItem("token", data.token);
-                localStorage.setItem("user", JSON.stringify({ email: guestEmail, isGuest: true }));
-                const credits = parseInt(data.credits) || 25; // Default 25 buat guest
-                router.push(`/menu?token=${data.token}&email=${encodeURIComponent(guestEmail)}&credits=${credits}`);
+                localStorage.setItem("user_email", guestEmail);
+                router.push(`/menu?email=${encodeURIComponent(guestEmail)}&credits=${data.credits || 25}`);
               } else {
-                console.error("No token or invalid response, status:", response.status, "data:", data);
-                throw new Error("No token received or server error");
+                throw new Error(data.error || "No token received");
               }
             } catch (error) {
               console.error("Guest login error:", error);
-              if (error instanceof Error && error.message.includes("404")) {
-                console.warn("Endpoint /api/guest-login not found, redirecting to home");
-                router.push("/");
-              } else {
-                const dummyToken = "guest-token-" + guestEmail;
-                console.log("Using dummy token:", dummyToken);
-                sessionStorage.setItem("token", dummyToken);
-                localStorage.setItem("user", JSON.stringify({ email: guestEmail, isGuest: true }));
-                router.push(`/menu?guest=1&email=${encodeURIComponent(guestEmail)}`);
-              }
+              // Fallback untuk development
+              const dummyToken = "guest-token-" + guestEmail;
+              sessionStorage.setItem("token", dummyToken);
+              localStorage.setItem("user_email", guestEmail);
+              router.push(`/menu?email=${encodeURIComponent(guestEmail)}&credits=25`);
             }
           }}
           bgStyle={darkMode ? darkBg : animeBg}

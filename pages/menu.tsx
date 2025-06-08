@@ -24,37 +24,63 @@ const MenuPage: React.FC = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = sessionStorage.getItem("token");
-      const storedEmail = localStorage.getItem("user_email");
-      const params = new URLSearchParams(window.location.search);
-      const urlEmail = params.get("email");
-      const urlCredits = params.get("credits");
-
-      // Redirect ke home jika tidak ada token atau email
-      if (!token || !storedEmail) {
-        console.log("No token or email found, redirecting to home");
-        router.push("/");
-        return;
-      }
-
       try {
-        // Verifikasi credits dengan backend
-        const response = await fetch(
-          `${BACKEND_URL}/api/credits?user_email=${encodeURIComponent(storedEmail)}`
-        );
-        const data = await response.json();
+        const token = sessionStorage.getItem("token");
+        const storedEmail = localStorage.getItem("user_email");
+        const params = new URLSearchParams(window.location.search);
+        const urlEmail = params.get("email");
+        const urlCredits = params.get("credits");
 
-        if (response.ok) {
-          setCredits(parseInt(data.credits));
-          setEmail(storedEmail);
-        } else {
-          throw new Error(data.error || "Failed to fetch credits");
+        // Improved validation for auth state
+        if (!token || !storedEmail) {
+          console.log("No token or email found, redirecting to home");
+          // Clear any partial auth state
+          sessionStorage.removeItem("token");
+          localStorage.removeItem("user_email");
+          router.push("/");
+          return;
+        }
+
+        // Verify email consistency
+        if (urlEmail && urlEmail !== storedEmail) {
+          console.log("Email mismatch, using stored email");
+        }
+
+        try {
+          // Verifikasi credits dengan backend
+          const response = await fetch(
+            `${BACKEND_URL}/api/credits?user_email=${encodeURIComponent(storedEmail)}`
+          );
+          const data = await response.json();
+
+          if (response.ok) {
+            setCredits(parseInt(data.credits));
+            setEmail(storedEmail);
+          } else {
+            // If API returns error, try fallback to URL credits
+            if (urlCredits) {
+              console.log("Using URL credits as fallback");
+              setCredits(parseInt(urlCredits));
+              setEmail(storedEmail);
+            } else {
+              throw new Error(data.error || "Failed to fetch credits");
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching credits:", error);
+          // Only use URL credits as last resort
+          if (urlCredits) {
+            setCredits(parseInt(urlCredits));
+            setEmail(storedEmail);
+          } else {
+            // For guest users, provide minimum credits
+            setCredits(storedEmail.includes("@guest.kugy.ai") ? 25 : 75);
+            setEmail(storedEmail);
+          }
         }
       } catch (error) {
-        console.error("Error fetching credits:", error);
-        // Fallback ke URL params jika API gagal
-        setCredits(urlCredits ? parseInt(urlCredits) : 25);
-        setEmail(urlEmail || storedEmail);
+        console.error("Auth check error:", error);
+        setError("Terjadi kesalahan. Silakan coba login kembali.");
       } finally {
         setLoading(false);
       }

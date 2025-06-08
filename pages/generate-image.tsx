@@ -41,14 +41,16 @@ const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits: initialCre
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [credits, setCredits] = useState(initialCredits);
+  const [credits, setCredits] = useState(initialCredits || 0); // Fallback ke 0 kalau undefined
   const router = useRouter();
 
-  // Sync credits with props
+  // Sync credits with props and log for debug
   useEffect(() => {
-    console.log("Syncing credits:", initialCredits);
-    setCredits(initialCredits);
-  }, [initialCredits]);
+    console.log("Syncing credits from props:", initialCredits);
+    const newCredits = initialCredits || 0; // Pastikan gak undefined
+    setCredits(newCredits);
+    onCreditsUpdate(newCredits); // Sinkronisasi ke parent
+  }, [initialCredits, onCreditsUpdate]);
 
   // Validation
   const canGenerate = credits >= 10 && !loading && prompt.trim().length > 0;
@@ -79,8 +81,9 @@ const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits: initialCre
 
       if (response.ok) {
         setResult(data.image);
-        const newCredits = parseInt(data.credits) || credits - 10; // Pastikan credits numeric
-        onCreditsUpdate(newCredits);
+        const newCredits = parseInt(data.credits) || Math.max(0, credits - 10); // Pastikan gak negatif
+        setCredits(newCredits);
+        onCreditsUpdate(newCredits); // Update parent state
       } else {
         throw new Error(data.error || data.message || texts.error.failed);
       }
@@ -139,7 +142,7 @@ const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits: initialCre
           {/* Credits Info */}
           <div className="flex justify-between items-center mb-4">
             <div className="text-sm text-gray-600 dark:text-gray-300">
-              {texts.credits} {credits}
+              {texts.credits} {credits || 0} {/* Fallback ke 0 kalau undefined */}
             </div>
             <div className="text-sm text-gray-600 dark:text-gray-300">
               {texts.cost}

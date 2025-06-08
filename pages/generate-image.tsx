@@ -41,13 +41,13 @@ const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits: initialCre
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [credits, setCredits] = useState(initialCredits || 0); // Fallback ke 0 kalau undefined
+  const [credits, setCredits] = useState(initialCredits || 0); // Fallback ke 0
   const router = useRouter();
 
   // Sync credits with props and log for debug
   useEffect(() => {
     console.log("Syncing credits from props:", initialCredits);
-    const newCredits = initialCredits || 0; // Pastikan gak undefined
+    const newCredits = typeof initialCredits === "number" ? initialCredits : 0; // Pastikan number
     setCredits(newCredits);
     onCreditsUpdate(newCredits); // Sinkronisasi ke parent
   }, [initialCredits, onCreditsUpdate]);
@@ -81,9 +81,9 @@ const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits: initialCre
 
       if (response.ok) {
         setResult(data.image);
-        const newCredits = parseInt(data.credits) || Math.max(0, credits - 10); // Pastikan gak negatif
+        const newCredits = parseInt(data.credits) || Math.max(0, credits - 10); // Fallback ke pengurangan
         setCredits(newCredits);
-        onCreditsUpdate(newCredits); // Update parent state
+        onCreditsUpdate(newCredits);
       } else {
         throw new Error(data.error || data.message || texts.error.failed);
       }
@@ -142,7 +142,7 @@ const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits: initialCre
           {/* Credits Info */}
           <div className="flex justify-between items-center mb-4">
             <div className="text-sm text-gray-600 dark:text-gray-300">
-              {texts.credits} {credits || 0} {/* Fallback ke 0 kalau undefined */}
+              {texts.credits} {credits || 0}
             </div>
             <div className="text-sm text-gray-600 dark:text-gray-300">
               {texts.cost}

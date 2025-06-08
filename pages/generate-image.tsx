@@ -7,7 +7,7 @@ interface Props {
   onBack: () => void;
   email: string;
   credits: number;
-  onCreditsUpdate: (newCredits: number) => void;
+  onCreditsUpdate: (newCredits: number) => void; // Pastikan tipe bener
 }
 
 const texts = {
@@ -42,14 +42,17 @@ const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits: initialCre
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [credits, setCredits] = useState(initialCredits || 0); // Fallback ke 0
-  const router = useRouter();
 
   // Sync credits with props and log for debug
   useEffect(() => {
     console.log("Syncing credits from props:", initialCredits);
-    const newCredits = typeof initialCredits === "number" ? initialCredits : 0; // Pastikan number
-    setCredits(newCredits);
-    onCreditsUpdate(newCredits); // Sinkronisasi ke parent
+    const newCredits = typeof initialCredits === "number" ? initialCredits : 0;
+    if (typeof onCreditsUpdate === "function") {
+      setCredits(newCredits);
+      onCreditsUpdate(newCredits); // Pastiin fungsi ada sebelum dipanggil
+    } else {
+      console.error("onCreditsUpdate is not a function:", onCreditsUpdate);
+    }
   }, [initialCredits, onCreditsUpdate]);
 
   // Validation
@@ -81,9 +84,11 @@ const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits: initialCre
 
       if (response.ok) {
         setResult(data.image);
-        const newCredits = parseInt(data.credits) || Math.max(0, credits - 10); // Fallback ke pengurangan
+        const newCredits = parseInt(data.credits) || Math.max(0, credits - 10);
         setCredits(newCredits);
-        onCreditsUpdate(newCredits);
+        if (typeof onCreditsUpdate === "function") {
+          onCreditsUpdate(newCredits);
+        }
       } else {
         throw new Error(data.error || data.message || texts.error.failed);
       }
@@ -152,8 +157,8 @@ const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits: initialCre
           {/* Input Area */}
           <div className="space-y-4">
             <textarea
-              id="image-prompt" // Tambahin id
-              name="image-prompt" // Tambahin name
+              id="image-prompt"
+              name="image-prompt"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder={texts.placeholder}

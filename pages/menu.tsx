@@ -24,15 +24,17 @@ const MenuPage: React.FC = () => {
     const params = new URLSearchParams(window.location.search);
     const gotEmail = params.get("email");
     const guest = params.get("guest");
+    const creditsParam = params.get("credits");
 
     // Set state sesuai parameter
     if (gotEmail) {
       setEmail(gotEmail);
-      setCredits(gotEmail.toLowerCase().startsWith("guest") ? 20 : 75);
+      // Prioritas credits dari URL, fallback ke logika default
+      setCredits(creditsParam ? parseInt(creditsParam) || (gotEmail.toLowerCase().startsWith("guest") ? 20 : 75) : gotEmail.toLowerCase().startsWith("guest") ? 20 : 75);
       setIsGuest(gotEmail.toLowerCase().startsWith("guest"));
     } else if (guest === "1") {
       setIsGuest(true);
-      setCredits(20);
+      setCredits(creditsParam ? parseInt(creditsParam) || 20 : 20);
     } else {
       // Redirect ke home jika tidak ada parameter valid
       router.push("/");
@@ -53,6 +55,7 @@ const MenuPage: React.FC = () => {
     if (isGuest) {
       params.set("guest", "1");
     }
+    params.set("credits", credits.toString());
 
     router.push(`/chat?${params.toString()}`);
   }

@@ -190,7 +190,7 @@ const ChatPage: React.FC = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={loading}
-            className="flex-1 p-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 p-3 rounded-lg bg-white/80 border border-white/30 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder={loading ? 'AI sedang mengetik...' : 'Ketik pesan Anda...'}
           />
           <button

@@ -1,28 +1,42 @@
-import { useState, createContext } from "react";
-import "../styles/globals.css";
+import { createContext, useState } from 'react';
+import type { AppProps } from 'next/app';
+import '../styles/globals.css';
 
-// Context supaya theme, darkMode, lang bisa diakses semua halaman
-export const UiContext = createContext({
-  theme: { name: "Biru Langit", color: "#38bdf8", gradient: "from-blue-400 to-sky-400" },
-  setTheme: (_: any) => {},
+interface UiContextType {
+  theme: string;
+  setTheme: (theme: string) => void;
+  darkMode: boolean;
+  setDarkMode: (darkMode: boolean) => void;
+  lang: string;
+  setLang: (lang: string) => void;
+}
+
+export const UiContext = createContext<UiContextType>({
+  theme: 'light',
+  setTheme: () => {},
   darkMode: false,
-  setDarkMode: (_: boolean) => {},
-  lang: "id",
-  setLang: (_: string) => {},
+  setDarkMode: () => {},
+  lang: 'id',
+  setLang: () => {},
 });
 
-function MyApp({ Component, pageProps }) {
+function MyApp({ Component, pageProps }: AppProps) {
+  const [theme, setTheme] = useState('light');
   const [darkMode, setDarkMode] = useState(false);
-  const [lang, setLang] = useState("id"); // Default ke Indonesia, gak perlu switcher
-
-  // Pake theme default statis, hapus array themes dan setTheme
-  const theme = { name: "Biru Langit", color: "#38bdf8", gradient: "from-blue-400 to-sky-400" };
+  const [lang, setLang] = useState('id');
 
   return (
-    <UiContext.Provider value={{ theme, setTheme: () => {}, darkMode, setDarkMode, lang, setLang }}>
-      <div className={`min-h-screen ${darkMode ? "dark" : ""}`} style={{ background: darkMode ? "#1e293b" : theme.color }}>
-        <Component {...pageProps} />
-      </div>
+    <UiContext.Provider
+      value={{
+        theme,
+        setTheme,
+        darkMode,
+        setDarkMode,
+        lang,
+        setLang,
+      }}
+    >
+      <Component {...pageProps} />
     </UiContext.Provider>
   );
 }

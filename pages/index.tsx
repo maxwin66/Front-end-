@@ -17,7 +17,7 @@ const animeQuotes = [
 const texts = {
   start: "Mulai",
   carousel: [
-    "🎁 Gratis 75 Kredit untuk Pengguna Baru!",
+    "🎁 Login Google - 75 Kredit | Guest - 25 Kredit!", // Updated to show both credit amounts
     "🚀 Login dengan Google atau Sebagai Tamu",
     "💬 Chat AI Karakter Anime 24/7",
     "✨ Privasi Aman & Tampilan Premium",
@@ -220,7 +220,7 @@ const IndexPage: React.FC = () => {
               if (response.ok && data.token) {
                 sessionStorage.setItem("token", data.token);
                 localStorage.setItem("user_email", guestEmail);
-                router.push(`/menu?email=${encodeURIComponent(guestEmail)}&credits=${data.credits || 25}`);
+                router.push(`/menu?email=${encodeURIComponent(guestEmail)}&credits=25`);
               } else {
                 throw new Error(data.error || "No token received");
               }

@@ -224,10 +224,11 @@ const IndexPage: React.FC = () => {
               console.log("Guest login response status:", response.status); // Debug log
               const data = await response.json();
               if (response.ok && data.token) {
-                console.log("Guest login success, token:", data.token);
+                console.log("Guest login success, token:", data.token, "credits:", data.credits);
                 sessionStorage.setItem("token", data.token);
                 localStorage.setItem("user", JSON.stringify({ email: guestEmail, isGuest: true }));
-                router.push(`/menu?guest=1&email=${encodeURIComponent(guestEmail)}`);
+                const credits = parseInt(data.credits) || 25; // Default 25 buat guest
+                router.push(`/menu?token=${data.token}&email=${encodeURIComponent(guestEmail)}&credits=${credits}`);
               } else {
                 console.error("No token or invalid response, status:", response.status, "data:", data);
                 throw new Error("No token received or server error");

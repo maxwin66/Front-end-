@@ -152,6 +152,8 @@ const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits: initialCre
           {/* Input Area */}
           <div className="space-y-4">
             <textarea
+              id="image-prompt" // Tambahin id
+              name="image-prompt" // Tambahin name
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder={texts.placeholder}

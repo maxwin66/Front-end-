@@ -17,7 +17,7 @@ const MenuPage: React.FC = () => {
   const { darkMode } = useContext(UiContext);
   const [email, setEmail] = useState("");
   const [isGuest, setIsGuest] = useState(false);
-  const [credits, setCredits] = useState(0);
+  const [credits, setCredits] = useState(25); // Default 25 buat tes
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -27,26 +27,22 @@ const MenuPage: React.FC = () => {
 
     if (gotEmail) {
       setEmail(gotEmail);
-      setCredits(creditsParam ? parseInt(creditsParam) || (gotEmail.toLowerCase().startsWith("guest") ? 20 : 75) : gotEmail.toLowerCase().startsWith("guest") ? 20 : 75);
+      setCredits(creditsParam ? parseInt(creditsParam) || 25 : 25);
       setIsGuest(gotEmail.toLowerCase().startsWith("guest"));
     } else if (guest === "1") {
       setIsGuest(true);
-      setCredits(creditsParam ? parseInt(creditsParam) || 20 : 20);
+      setCredits(creditsParam ? parseInt(creditsParam) || 25 : 25);
     } else {
       router.push("/");
     }
-    console.log("MenuPage params:", { gotEmail, guest, creditsParam, credits }); // Debug
+    console.log("MenuPage params:", { gotEmail, guest, creditsParam, credits });
   }, [router.query]);
-
-  function handleComingSoon(feature: string) {
-    window.alert(`Fitur "${feature}" akan segera hadir di MyKugy! Nantikan update berikutnya ya!`);
-  }
 
   function handleChatClick() {
     const params = new URLSearchParams();
     if (email) params.set("email", email);
     if (isGuest) params.set("guest", "1");
-    if (credits) params.set("credits", credits.toString());
+    params.set("credits", credits.toString());
     router.push(`/chat?${params.toString()}`);
   }
 
@@ -54,12 +50,12 @@ const MenuPage: React.FC = () => {
     const params = new URLSearchParams();
     if (email) params.set("email", email);
     if (isGuest) params.set("guest", "1");
-    if (credits) params.set("credits", credits.toString());
+    params.set("credits", credits.toString());
     router.push(`/generate-image?${params.toString()}`);
   }
 
-  function handleNovelClick() {
-    handleComingSoon("Bikin Novel");
+  function handleComingSoon() {
+    alert("Fitur ini akan segera hadir di MyKugy! Nantikan update ya!");
   }
 
   return (
@@ -77,7 +73,7 @@ const MenuPage: React.FC = () => {
 
         <div className="w-full mb-6 px-4 py-2 bg-blue-50 dark:bg-slate-700 rounded-xl text-center">
           <span className="text-sm font-medium text-blue-600 dark:text-blue-300">
-            Kredit Tersedia: <span className="font-bold">{credits || 0}</span>
+            Kredit Tersedia: <span className="font-bold">{credits}</span>
           </span>
         </div>
 
@@ -89,7 +85,7 @@ const MenuPage: React.FC = () => {
           Buat Gambar
         </button>
 
-        <button className="w-full py-4 rounded-2xl font-bold text-white text-lg bg-gradient-to-r from-pink-500 to-yellow-400 shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-200 outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent" onClick={handleNovelClick}>
+        <button className="w-full py-4 rounded-2xl font-bold text-white text-lg bg-gradient-to-r from-pink-500 to-yellow-400 shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-200 outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent" onClick={handleComingSoon}>
           Bikin Novel
           <span className="ml-2 text-xs font-normal">Segera Hadir</span>
         </button>

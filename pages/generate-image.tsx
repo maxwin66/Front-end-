@@ -46,7 +46,7 @@ const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits: initialCre
 
   // Sync credits with props
   useEffect(() => {
-    console.log("Syncing credits:", initialCredits); // Debug log
+    console.log("Syncing credits:", initialCredits);
     setCredits(initialCredits);
   }, [initialCredits]);
 
@@ -74,15 +74,16 @@ const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits: initialCre
         }),
       });
 
-      console.log("API response status:", response.status); // Debug log
+      console.log("API response status:", response.status);
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.message || texts.error.failed);
+      if (response.ok) {
+        // Asumsi backend ngembaliin base64 image langsung
+        setResult(data.image);
+        onCreditsUpdate(data.credits || credits - 10); // Update credits (sesuai logika asli 3 kredit, disesuaikan 10)
+      } else {
+        throw new Error(data.error || texts.error.failed);
       }
-
-      setResult(data.image);
-      onCreditsUpdate(parseInt(data.credits));
     } catch (err: any) {
       console.error("API error:", err.message);
       setError(err.message);

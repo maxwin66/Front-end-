@@ -1,452 +1,128 @@
-import { useState, useEffect, useRef, useContext } from "react";
-import { UiContext } from "../pages/_app";
-import Image from "next/image";
-import { useRouter } from "next/router";
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/router';
 
 interface Message {
-  role: "user" | "assistant";
+  role: 'user' | 'assistant';
   content: string;
-  timestamp?: string;
 }
 
-interface Props {
+interface ChatInterfaceProps {
   email: string;
-  isGuest: boolean;
-  credits: number;
+  initialCredits?: number;
+  darkMode?: boolean;
 }
 
-const ChatInterface: React.FC<Props> = ({
-  email,
-  isGuest,
-  credits: initialCredits,
-}) => {
+const BACKEND_URL = "https://backend-cb98.onrender.com";
+
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({ email, initialCredits = 0, darkMode }) => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputMessage, setInputMessage] = useState("");
+  const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [credits, setCredits] = useState(initialCredits);
-  const [model, setModel] = useState("OpenRouter (Grok 3 Mini Beta)");
-  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { theme, darkMode, lang } = useContext(UiContext);
 
-  const animeBg = {
-    backgroundImage:
-      "url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png')",
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
-    backgroundAttachment: "fixed",
-    minHeight: "100vh",
-    width: "100%",
-  };
-
-  const darkBg = {
-    background: "linear-gradient(135deg, #0f172a 40%, #172554 100%)",
-    minHeight: "100vh",
-    width: "100%",
-    backgroundAttachment: "fixed",
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
-    const scrollToBottom = () => {
-      if (chatContainerRef.current) {
-        const { scrollHeight, clientHeight } = chatContainerRef.current;
-        chatContainerRef.current.scrollTo({
-          top: scrollHeight - clientHeight,
-          behavior: "smooth",
-        });
-      }
-    };
     scrollToBottom();
-    const timeoutId = setTimeout(scrollToBottom, 100);
-    return () => clearTimeout(timeoutId);
-  }, [messages, loading]);
+  }, [messages]);
 
-  useEffect(() => {
-    const initialCredits = isGuest ? 20 : 75;
-    setCredits(initialCredits);
-    setMessages([
-      {
-        role: "assistant",
-        content:
-          lang === "id"
-            ? `Halo! Saya adalah AI Assistant yang siap membantu kamu. Kamu memiliki ${initialCredits} kredit.`
-            : lang === "en"
-              ? `Hello! I'm your AI Assistant ready to help. You have ${initialCredits} credits.`
-              : `こんにちは！私はあなたのAIアシスタントです。${initialCredits}クレジットがあります。`,
-        timestamp: new Date().toISOString(),
-      },
-    ]);
-  }, [isGuest, lang]);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || loading) return;
 
-  useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const token = sessionStorage.getItem("token");
-        if (!token) {
-          console.error("No token found in sessionStorage");
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: "assistant",
-              content:
-                lang === "id"
-                  ? "Sesi tidak valid. Silakan login kembali."
-                  : lang === "en"
-                    ? "Invalid session. Please log in again."
-                    : "セッションが無効です。再度ログインしてください。",
-              timestamp: new Date().toISOString(),
-            },
-          ]);
-          setTimeout(() => router.push("/"), 2000);
-          return;
-        }
-        console.log("Fetching history with token:", token);
-        const response = await fetch(
-          `https://backend-cb98.onrender.com/api/history?user_email=${encodeURIComponent(email)}`,
-          {
-            credentials: "include",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        console.log("History API response status:", response.status);
-        if (response.ok) {
-          const data = await response.json();
-          console.log("History API data:", data);
-          if (Array.isArray(data.history)) {
-            setMessages((prev) => [
-              ...prev,
-              ...data.history.map((h: any) => ({
-                role: h.role || (h.question ? "user" : "assistant"),
-                content: h.question || h.answer,
-                timestamp: h.timestamp,
-              })),
-            ]);
-            if (typeof data.credits === "number") {
-              setCredits(data.credits);
-            }
-          }
-        } else if (response.status === 401) {
-          console.error("Unauthorized: Invalid or expired token");
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: "assistant",
-              content:
-                lang === "id"
-                  ? "Sesi Anda tidak valid. Silakan login lagi."
-                  : lang === "en"
-                    ? "Your session is invalid. Please log in again."
-                    : "セッションが終了しました。再度ログインしてください。",
-              timestamp: new Date().toISOString(),
-            },
-          ]);
-          setTimeout(() => router.push("/"), 2000);
-        } else {
-          console.error(
-            "Unexpected history API response:",
-            response.status,
-            response.statusText
-          );
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: "assistant",
-              content:
-                lang === "id"
-                  ? "Gagal memuat riwayat chat. Silakan coba lagi."
-                  : lang === "en"
-                    ? "Failed to load chat history. Please try again."
-                    : "チャット履歴の読み込みに失敗しました。もう一度お試しください。",
-              timestamp: new Date().toISOString(),
-            },
-          ]);
-        }
-      } catch (error) {
-        console.error("Error fetching history:", error);
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content:
-              lang === "id"
-                ? "Gagal memuat riwayat chat. Silakan coba lagi."
-                : lang === "en"
-                  ? "Failed to load chat history. Please try again."
-                  : "チャット履歴の読み込みに失敗しました。もう一度お試しください。",
-            timestamp: new Date().toISOString(),
-          },
-        ]);
-      }
-    };
-    if (email) fetchHistory();
-  }, [email, router, lang]);
-
-  const handleSend = async () => {
-    if (!inputMessage.trim() || loading || credits <= 0) {
-      if (credits <= 0) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content:
-              lang === "id"
-                ? "Maaf, kredit Anda habis. Silakan login dengan Google untuk mendapatkan kredit lebih banyak."
-                : lang === "en"
-                  ? "Sorry, you have no credits left. Please log in with Google for more credits."
-                  : "申し訳ありません、クレジットが不足しています。Googleでログインしてクレジットを追加してください。",
-            timestamp: new Date().toISOString(),
-          },
-        ]);
-      }
-      return;
-    }
-    const userMessage = inputMessage.trim();
-    const timestamp = new Date().toISOString();
-    setInputMessage("");
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", content: userMessage, timestamp },
-    ]);
+    const userMessage = input.trim();
+    setInput('');
     setLoading(true);
+
     try {
-      const token = sessionStorage.getItem("token");
-      if (!token) {
-        console.error("No token found in sessionStorage");
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content:
-              lang === "id"
-                ? "Sesi tidak valid. Silakan login kembali."
-                : lang === "en"
-                  ? "Invalid session. Please log in again."
-                  : "セッションが無効です。再度ログインしてください。",
-            timestamp: new Date().toISOString(),
-          },
-        ]);
-        setTimeout(() => router.push("/"), 2000);
-        return;
-      }
-      console.log("Sending chat with token:", token);
-      const response = await fetch("https://backend-cb98.onrender.com/api/chat", {
-        method: "POST",
+      setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+
+      const response = await fetch(`${BACKEND_URL}/api/chat`, {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-        credentials: "include",
         body: JSON.stringify({
           user_email: email,
           message: userMessage,
-          model_select: model,
-          timestamp: timestamp,
+          model_select: "OpenRouter (Grok 3 Mini Beta)"
         }),
       });
-      console.log("Chat API response status:", response.status);
-      if (response.status === 401) {
-        console.error("Unauthorized: Invalid or expired token");
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content:
-              lang === "id"
-                ? "Sesi Anda tidak valid. Silakan login lagi."
-                : lang === "en"
-                  ? "Your session is invalid. Please log in again."
-                  : "セッションが終了しました。再度ログインしてください。",
-            timestamp: new Date().toISOString(),
-          },
-        ]);
-        setTimeout(() => router.push("/"), 2000);
+
+      if (response.status === 402) {
+        alert('Kredit Anda habis! Silakan login dengan Google untuk mendapatkan kredit tambahan.');
+        router.push('/');
         return;
       }
+
       const data = await response.json();
-      console.log("Chat API data:", data);
-      if (data.reply) {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: data.reply, timestamp: new Date().toISOString() },
-        ]);
-        if (typeof data.credits === "number") {
-          setCredits(data.credits);
-        } else {
-          setCredits((prev) => Math.max(0, prev - 1));
-        }
+
+      if (response.ok) {
+        setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
+        setCredits(parseInt(data.credits));
       } else {
-        throw new Error("No reply found in API response");
+        throw new Error(data.error || 'Failed to get response');
       }
     } catch (error) {
-      console.error("Chat error:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            lang === "id"
-              ? "Maaf, terjadi kesalahan. Silakan coba lagi nanti."
-              : lang === "en"
-                ? "Sorry, an error occurred. Please try again later."
-                : "申し訳ありません、エラーが発生しました。後でもお試しください。",
-          timestamp: new Date().toISOString(),
-        },
-      ]);
+      console.error('Chat error:', error);
+      alert('Gagal mengirim pesan. Silakan coba lagi.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative">
-      <div className="fixed inset-0 z-0" style={darkMode ? darkBg : animeBg} />
-      <div className="fixed inset-0 bg-gradient-to-b from-black/20 to-blue-200/20 dark:from-black/30 dark:to-black/50 z-0" />
-      <div className="relative flex flex-col min-h-screen z-10">
-        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-lg border-b border-white/20">
-          <div className="max-w-7xl mx-auto px-4 py-3">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-4 ml-10">
-                <Image
-                  src="/logo.png"
-                  alt="Logo"
-                  width={40}
-                  height={40}
-                  className="rounded-full ring-2 ring-blue-500/50 p-0.5"
-                />
-                <div className="flex items-center space-x-2" style={{ zIndex: 20 }}>
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Credits:
-                  </span>
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-bold ${
-                      credits > 10
-                        ? "bg-green-500"
-                        : credits > 0
-                          ? "bg-yellow-500"
-                          : "bg-red-500"
-                    } text-white`}
-                  >
-                    {credits}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <select
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  className="px-3 py-1.5 rounded-lg bg-white/90 dark:bg-gray-700/90 border border-blue-400 dark:border-blue-500 text-sm font-medium shadow-sm hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="OpenRouter (Grok 3 Mini Beta)">Grok 3 Mini</option>
-                  <option value="OpenRouter (Gemini 2.0 Flash)">Gemini 2.0</option>
-                </select>
-                <button
-                  onClick={() => router.push("/")}
-                  className="px-4 py-1.5 rounded-lg font-medium bg-gradient-to-r from-red-500 to-pink-600 text-white shadow-sm hover:shadow-md transition-all"
-                >
-                  Logout
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 scroll-smooth">
-          <div className="max-w-3xl mx-auto space-y-4">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
-                    message.role === "user"
-                      ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white"
-                      : "bg-white/80 dark:bg-gray-800/80 text-gray-800 dark:text-gray-100 backdrop-blur-sm border border-gray-100/20"
-                  } shadow-lg`}
-                >
-                  {message.content}
-                </div>
-              </div>
-            ))}
-            {loading && (
-              <div className="flex justify-start">
-                <div className="bg-white/80 dark:bg-gray-800/80 rounded-2xl px-4 py-2.5 shadow-lg backdrop-blur-sm border border-gray-100/20">
-                  <div className="flex items-center space-x-2">
-                    <div
-                      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0ms" }}
-                    />
-                    <div
-                      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "150ms" }}
-                    />
-                    <div
-                      className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "300ms" }}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="bg-white/80 dark:bg-gray-800/80 shadow-lg backdrop-blur-md border-t border-gray-100/20 p-4">
-          <div className="max-w-3xl mx-auto flex space-x-4">
-            <input
-              type="text"
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleSend()}
-              placeholder={
-                credits <= 0
-                  ? lang === "id"
-                    ? "Kredit Anda habis..."
-                    : lang === "en"
-                      ? "Your credits are depleted..."
-                      : "クレジットが不足しています..."
-                  : lang === "id"
-                    ? "Ketik pesanmu di sini..."
-                    : lang === "en"
-                      ? "Type your message here..."
-                      : "メッセージを入力..."
-              }
-              className="flex-1 px-4 py-3 rounded-xl border border-blue-400/80 dark:border-blue-500/40 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700/80 dark:text-gray-100 placeholder-gray-400/80 dark:placeholder-gray-400/60"
-              disabled={loading || credits <= 0}
-            />
-            <button
-              onClick={handleSend}
-              disabled={loading || !inputMessage.trim() || credits <= 0}
-              className={`px-6 py-3 rounded-lg font-medium text-white transition-all ${
-                loading || !inputMessage.trim() || credits <= 0
-                  ? "bg-gray-400/80"
-                  : "bg-gradient-to-r from-blue-500 to-blue-600 hover:shadow-lg hover:scale-100"
-              }`}
-            >
-              {loading ? (
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-white rounded-full animate-bounce" />
-                  <div
-                    className="w-2 h-2 bg-white rounded-full animate-bounce"
-                    style={{ animationDelay: "150ms" }}
-                  />
-                  <div
-                    className="w-2 h-2 bg-white rounded-full animate-bounce"
-                    style={{ animationDelay: "300ms" }}
-                  />
-                </div>
-              ) : lang === "id" ? (
-                "Kirim"
-              ) : lang === "en" ? (
-                "Send"
-              ) : (
-                "送信"
-              )}
-            </button>
-          </div>
+    <div className="flex flex-col h-screen">
+      <div className="p-4 bg-blue-500 dark:bg-blue-600 text-white">
+        <div className="max-w-4xl mx-auto flex justify-between items-center">
+          <h1 className="text-xl font-bold">Chat with AI</h1>
+          <div className="text-sm">Credits: {credits}</div>
         </div>
       </div>
+
+      <div className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-4xl mx-auto space-y-4">
+          {messages.map((msg, i) => (
+            <div
+              key={i}
+              className={`p-4 rounded-lg ${
+                msg.role === 'user'
+                  ? 'bg-blue-100 dark:bg-blue-900 ml-auto max-w-[80%]'
+                  : 'bg-white dark:bg-gray-800 max-w-[80%]'
+              } shadow`}
+            >
+              <div className={`text-${msg.role === 'user' ? 'blue-800' : 'gray-800'} dark:text-white`}>
+                {msg.content}
+              </div>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="p-4 bg-white dark:bg-gray-800 border-t dark:border-gray-700">
+        <div className="max-w-4xl mx-auto flex gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            disabled={loading}
+            placeholder={loading ? "AI sedang mengetik..." : "Ketik pesan Anda..."}
+            className="flex-1 p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          />
+          <button
+            type="submit"
+            disabled={loading || !input.trim()}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50 hover:bg-blue-600 transition-colors"
+          >
+            {loading ? "..." : "Kirim"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

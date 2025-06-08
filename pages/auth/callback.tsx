@@ -7,27 +7,54 @@ const AuthCallback: React.FC = () => {
   const { lang } = useContext(UiContext);
 
   useEffect(() => {
-    if (!router.isReady) return;
+    const handleCallback = async () => {
+      if (!router.isReady) return;
 
-    const { token, email } = router.query;
+      const { token, email } = router.query;
 
-    console.log('Auth callback query:', { token, email });
+      console.log('Auth callback query:', { token, email });
 
-    if (typeof token === 'string' && typeof email === 'string') {
-      sessionStorage.setItem('token', token);
-      localStorage.setItem('user_email', email);
-      router.push(`/menu?email=${encodeURIComponent(email)}`);
-    } else {
-      console.error('Invalid token or email in callback:', { token, email });
-      window.alert(
-        lang === 'id'
-          ? 'Gagal login dengan Google. Silakan coba lagi.'
-          : lang === 'en'
-          ? 'Failed to log in with Google. Please try again.'
-          : 'Googleでのログインに失敗しました。もう一度お試しください。'
-      );
-      router.push('/');
-    }
+      if (typeof token === 'string' && typeof email === 'string') {
+        try {
+          // Simpan data secara synchronous
+          sessionStorage.setItem('token', token);
+          localStorage.setItem('user_email', email);
+          
+          // Verifikasi data tersimpan
+          const storedToken = sessionStorage.getItem('token');
+          const storedEmail = localStorage.getItem('user_email');
+          
+          if (storedToken && storedEmail) {
+            // Redirect setelah memastikan data tersimpan
+            await router.push(`/menu?email=${encodeURIComponent(email)}`);
+          } else {
+            throw new Error('Failed to store auth data');
+          }
+        } catch (error) {
+          console.error('Auth storage error:', error);
+          alert(
+            lang === 'id'
+              ? 'Terjadi kesalahan saat login. Silakan coba lagi.'
+              : lang === 'en'
+              ? 'Error during login. Please try again.'
+              : 'ログイン中にエラーが発生しました。もう一度お試しください。'
+          );
+          router.push('/');
+        }
+      } else {
+        console.error('Invalid token or email in callback:', { token, email });
+        alert(
+          lang === 'id'
+            ? 'Data login tidak valid. Silakan coba lagi.'
+            : lang === 'en'
+            ? 'Invalid login data. Please try again.'
+            : '無効なログインデータです。もう一度お試しください。'
+        );
+        router.push('/');
+      }
+    };
+
+    handleCallback();
   }, [router.isReady, router.query, lang, router]);
 
   return (

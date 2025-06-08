@@ -56,7 +56,6 @@ const HomeSelect: React.FC<Props> = ({ onGoogle, onGuest, bgStyle }) => {
           {theme === "light" ? "Biru Langit" : "Mode Gelap"}
         </button>
 
-        {/* Language Dropdown */}
         <div className="relative">
           <button 
             onClick={() => setShowLanguages(!showLanguages)}
@@ -68,7 +67,6 @@ const HomeSelect: React.FC<Props> = ({ onGoogle, onGuest, bgStyle }) => {
             {currentLang.local}
           </button>
 
-          {/* Language Options Dropdown */}
           {showLanguages && (
             <div className="absolute top-full left-0 mt-1 w-full bg-white/95 backdrop-blur-sm rounded-md shadow-lg overflow-hidden">
               {LANGUAGES.map((lang) => (
@@ -108,9 +106,15 @@ const HomeSelect: React.FC<Props> = ({ onGoogle, onGuest, bgStyle }) => {
             <Image
               src="/logo.png"
               alt="MyKugy Logo"
-              layout="fill"
-              objectFit="contain"
+              width={128}
+              height={128}
               priority
+              className="object-contain"
+              onError={(e) => {
+                const img = e.target as HTMLImageElement;
+                img.src = '/fallback-logo.png'; // Fallback image jika logo utama gagal load
+                console.error('Error loading logo:', e);
+              }}
             />
           </div>
 

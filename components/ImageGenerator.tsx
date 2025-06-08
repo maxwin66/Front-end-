@@ -1,28 +1,35 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 
-interface ImageGeneratorProps {
+interface Props {
   email: string;
-  initialCredits?: number;
-  darkMode?: boolean;
+  initialCredits: number;
 }
 
 const BACKEND_URL = "https://backend-cb98.onrender.com";
 
-const ImageGenerator: React.FC<ImageGeneratorProps> = ({ email, initialCredits = 0, darkMode }) => {
+const animeBg = {
+  background: "url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png') center/cover no-repeat fixed",
+  minHeight: "100vh",
+};
+
+const darkBg = {
+  background: "linear-gradient(135deg,#0f172a 40%,#172554 100%)",
+  minHeight: "100vh",
+};
+
+const ImageGenerator: React.FC<Props> = ({ email, initialCredits }) => {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [credits, setCredits] = useState(initialCredits);
+  const [darkMode, setDarkMode] = useState(false);
   const router = useRouter();
+  const isGuest = email?.includes('@guest.kugy.ai') || false;
 
   const handleGenerate = async () => {
-    if (!prompt.trim() || loading) return;
-    if (credits < 10) {
-      alert('Anda membutuhkan minimal 10 kredit untuk membuat gambar.');
-      return;
-    }
+    if (!prompt.trim() || loading || credits < 10) return;
 
     setLoading(true);
     setError('');
@@ -49,7 +56,8 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ email, initialCredits =
 
       if (response.ok && data.image) {
         setGeneratedImage(data.image);
-        setCredits(parseInt(data.credits));
+        const newCredits = parseInt(data.credits);
+        setCredits(isGuest ? Math.min(newCredits, 25) : newCredits);
         setPrompt('');
       } else {
         throw new Error(data.error || 'Failed to generate image');
@@ -63,63 +71,100 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ email, initialCredits =
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6">
-          <div className="mb-6 flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
-              Buat Gambar dengan AI
-            </h1>
-            <div className="text-sm text-gray-600 dark:text-gray-300">
-              Credits: {credits} (Biaya: 10 credits/gambar)
-            </div>
+    <div className="min-h-screen py-8" style={darkMode ? darkBg : animeBg}>
+      {/* Header */}
+      <div className="max-w-4xl mx-auto px-4 mb-8">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-white">AI Image Generator</h1>
+            <span className="bg-blue-500/80 text-white text-xs px-2 py-1 rounded-full">Beta</span>
           </div>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="text-white hover:text-blue-200 transition"
+            >
+              {darkMode ? '🌞' : '🌙'}
+            </button>
+            <div className="text-sm text-white bg-blue-500/80 px-3 py-1 rounded-full">
+              Credits: {credits}
+            </div>
+            <button
+              onClick={() => router.push('/menu')}
+              className="text-white hover:text-blue-200 transition"
+            >
+              Menu
+            </button>
+          </div>
+        </div>
+      </div>
 
-          <div className="space-y-4">
-            <textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Deskripsikan gambar yang ingin Anda buat..."
-              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              rows={4}
-              disabled={loading}
-            />
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="bg-white/20 backdrop-blur-md rounded-xl shadow-xl p-6 border border-white/30">
+          <div className="space-y-6">
+            <div>
+              <label className="block text-white text-sm font-medium mb-2">
+                Deskripsi Gambar (Biaya: 10 credits/gambar)
+              </label>
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Contoh: A beautiful anime girl with long blue hair and blue eyes, wearing a white dress in a garden setting, masterpiece quality..."
+                className="w-full p-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows={4}
+                disabled={loading}
+              />
+            </div>
 
             <button
               onClick={handleGenerate}
               disabled={loading || !prompt.trim() || credits < 10}
-              className={`w-full py-3 rounded-lg font-medium text-white transition
+              className={`w-full py-4 rounded-lg font-medium text-white transition-all
                 ${loading || !prompt.trim() || credits < 10
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:opacity-90'
-                }`}
+                  ? 'bg-gray-500/50 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:opacity-90'
+                } flex items-center justify-center gap-2`}
             >
-              {loading ? 'Membuat Gambar...' : 'Generate Gambar'}
+              {loading ? (
+                <>
+                  <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
+                  <span>Membuat Gambar...</span>
+                </>
+              ) : (
+                'Generate Gambar'
+              )}
             </button>
 
             {error && (
-              <div className="p-3 bg-red-100 text-red-700 rounded-lg">
+              <div className="p-4 bg-red-500/20 border border-red-300/30 text-white rounded-lg">
                 {error}
               </div>
             )}
 
             {generatedImage && (
-              <div className="mt-6">
-                <img
-                  src={`data:image/png;base64,${generatedImage}`}
-                  alt="Generated"
-                  className="w-full rounded-lg shadow-lg"
-                />
+              <div className="mt-6 space-y-4">
+                <div className="relative aspect
+
+-square w-full rounded-lg overflow-hidden border border-white/30">
+                  <img
+                    src={`data:image/png;base64,${generatedImage}`}
+                    alt="Generated"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
                 <button
                   onClick={() => {
                     const link = document.createElement('a');
                     link.href = `data:image/png;base64,${generatedImage}`;
-                    link.download = 'generated-image.png';
+                    link.download = 'mykugy-ai-generated.png';
                     link.click();
                   }}
-                  className="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                  className="w-full py-3 bg-green-500/80 hover:bg-green-500/90 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
-                  Download Gambar
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span>Download Gambar</span>
                 </button>
               </div>
             )}

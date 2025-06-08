@@ -78,15 +78,15 @@ const GenerateImagePage: React.FC<Props> = ({ onBack, email, credits: initialCre
       const data = await response.json();
 
       if (response.ok) {
-        // Asumsi backend ngembaliin base64 image langsung
         setResult(data.image);
-        onCreditsUpdate(data.credits || credits - 10); // Update credits (sesuai logika asli 3 kredit, disesuaikan 10)
+        const newCredits = parseInt(data.credits) || credits - 10; // Pastikan credits numeric
+        onCreditsUpdate(newCredits);
       } else {
-        throw new Error(data.error || texts.error.failed);
+        throw new Error(data.error || data.message || texts.error.failed);
       }
     } catch (err: any) {
       console.error("API error:", err.message);
-      setError(err.message);
+      setError(err.message || texts.error.failed);
     } finally {
       setLoading(false);
     }

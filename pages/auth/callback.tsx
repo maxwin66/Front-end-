@@ -13,10 +13,9 @@ const AuthCallback: React.FC = () => {
 
     console.log('Auth callback query:', { token, email });
 
-    // Type checking untuk token dan email
     if (typeof token === 'string' && typeof email === 'string') {
       sessionStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({ email, isGuest: false }));
+      localStorage.setItem('user_email', email);
       router.push(`/menu?email=${encodeURIComponent(email)}`);
     } else {
       console.error('Invalid token or email in callback:', { token, email });
@@ -24,14 +23,18 @@ const AuthCallback: React.FC = () => {
         lang === 'id'
           ? 'Gagal login dengan Google. Silakan coba lagi.'
           : lang === 'en'
-            ? 'Failed to log in with Google. Please try again.'
-            : 'Googleでのログインに失敗しました。もう一度お試しください。'
+          ? 'Failed to log in with Google. Please try again.'
+          : 'Googleでのログインに失敗しました。もう一度お試しください。'
       );
       router.push('/');
     }
   }, [router.isReady, router.query, lang, router]);
 
-  return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>;
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-600">
+      <div className="text-white text-xl">Loading...</div>
+    </div>
+  );
 };
 
 export default AuthCallback;

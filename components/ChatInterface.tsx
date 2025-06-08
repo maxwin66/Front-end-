@@ -14,6 +14,17 @@ interface ChatInterfaceProps {
 
 const BACKEND_URL = "https://backend-cb98.onrender.com";
 
+// Background styles
+const animeBg = {
+  background: "url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png') center/cover no-repeat fixed",
+  minHeight: "100vh",
+};
+
+const darkBg = {
+  background: "linear-gradient(135deg,#0f172a 40%,#172554 100%)",
+  minHeight: "100vh",
+};
+
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ email, initialCredits = 0, darkMode }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -76,24 +87,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ email, initialCred
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      <div className="p-4 bg-blue-500 dark:bg-blue-600 text-white">
+    <div className="flex flex-col h-screen" style={darkMode ? darkBg : animeBg}>
+      <div className="p-4 bg-blue-500/90 backdrop-blur-sm dark:bg-blue-600/90 text-white">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           <h1 className="text-xl font-bold">Chat with AI</h1>
           <div className="text-sm">Credits: {credits}</div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900">
+      <div className="flex-1 overflow-y-auto p-4">
         <div className="max-w-4xl mx-auto space-y-4">
           {messages.map((msg, i) => (
             <div
               key={i}
-              className={`p-4 rounded-lg ${
+              className={`p-4 rounded-lg backdrop-blur-md ${
                 msg.role === 'user'
-                  ? 'bg-blue-100 dark:bg-blue-900 ml-auto max-w-[80%]'
-                  : 'bg-white dark:bg-gray-800 max-w-[80%]'
-              } shadow`}
+                  ? 'bg-blue-100/90 dark:bg-blue-900/90 ml-auto max-w-[80%]'
+                  : 'bg-white/90 dark:bg-gray-800/90 max-w-[80%]'
+              } shadow-lg`}
             >
               <div className={`text-${msg.role === 'user' ? 'blue-800' : 'gray-800'} dark:text-white`}>
                 {msg.content}
@@ -104,7 +115,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ email, initialCred
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-4 bg-white dark:bg-gray-800 border-t dark:border-gray-700">
+      <form onSubmit={handleSubmit} className="p-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border-t dark:border-gray-700">
         <div className="max-w-4xl mx-auto flex gap-2">
           <input
             type="text"
@@ -112,7 +123,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ email, initialCred
             onChange={(e) => setInput(e.target.value)}
             disabled={loading}
             placeholder={loading ? "AI sedang mengetik..." : "Ketik pesan Anda..."}
-            className="flex-1 p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            className="flex-1 p-2 border rounded-lg bg-white/80 dark:bg-gray-700/80 dark:border-gray-600 dark:text-white backdrop-blur-sm"
           />
           <button
             type="submit"

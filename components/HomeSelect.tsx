@@ -92,7 +92,7 @@ const HomeSelect: React.FC<Props> = ({ onGoogle, onGuest, bgStyle }) => {
           theme === "dark" 
             ? "bg-gray-800/95 text-white" 
             : "bg-white/95"
-          } rounded-3xl shadow-2xl px-8 py-10 w-full max-w-md flex flex-col items-center relative`}
+          } rounded-3xl shadow-2xl px-8 py-10 w-full max-w-md flex flex-col items-center relative backdrop-blur-md`}
         >
           {/* Beta Badge */}
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
@@ -166,7 +166,7 @@ const HomeSelect: React.FC<Props> = ({ onGoogle, onGuest, bgStyle }) => {
                 {currentLang.code === 'jp' ? 'ゲストモード: ' :
                  currentLang.code === 'en' ? 'Guest Mode: ' :
                  'Mode Tamu: '}
-                <span className="font-semibold">20 
+                <span className="font-semibold">25 
                   {currentLang.code === 'jp' ? 'クレジット' :
                    currentLang.code === 'en' ? 'Credits' :
                    'Kredit'}

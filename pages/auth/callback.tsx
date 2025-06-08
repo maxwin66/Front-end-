@@ -16,7 +16,7 @@ const AuthCallback: React.FC = () => {
 
       if (typeof token === 'string' && typeof email === 'string') {
         try {
-          // Simpan data secara synchronous
+          // Simpan data auth secara synchronous
           sessionStorage.setItem('token', token);
           localStorage.setItem('user_email', email);
           
@@ -25,8 +25,20 @@ const AuthCallback: React.FC = () => {
           const storedEmail = localStorage.getItem('user_email');
           
           if (storedToken && storedEmail) {
-            // Redirect setelah memastikan data tersimpan
-            await router.push(`/menu?email=${encodeURIComponent(email)}`);
+            // Fetch credits sebelum redirect
+            try {
+              const response = await fetch(
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/credits?user_email=${encodeURIComponent(email)}`
+              );
+              const data = await response.json();
+              
+              // Redirect dengan credits yang sudah diverifikasi
+              await router.push(`/menu?email=${encodeURIComponent(email)}&credits=${data.credits || 75}`);
+            } catch (error) {
+              console.error('Error fetching credits:', error);
+              // Fallback ke default credits jika API gagal
+              await router.push(`/menu?email=${encodeURIComponent(email)}&credits=75`);
+            }
           } else {
             throw new Error('Failed to store auth data');
           }

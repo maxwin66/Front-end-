@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { UiContext } from "./_app";
+import GenerateImagePage from "./GenerateImagePage"; // Pastikan import bener
 
 const animeBg = {
   background: "url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png') center/cover no-repeat",
@@ -38,6 +39,10 @@ const MenuPage: React.FC = () => {
     console.log("MenuPage params:", { gotEmail, guest, creditsParam, credits });
   }, [router.query]);
 
+  function handleComingSoon(feature: string) {
+    window.alert(`Fitur "${feature}" akan segera hadir di MyKugy! Nantikan update berikutnya ya!`);
+  }
+
   function handleChatClick() {
     const params = new URLSearchParams();
     if (email) params.set("email", email);
@@ -54,9 +59,15 @@ const MenuPage: React.FC = () => {
     router.push(`/generate-image?${params.toString()}`);
   }
 
-  function handleComingSoon() {
-    alert("Fitur ini akan segera hadir di MyKugy! Nantikan update ya!");
+  function handleNovelClick() {
+    handleComingSoon("Bikin Novel");
   }
+
+  // Fungsi onCreditsUpdate buat pass ke GenerateImagePage
+  const handleCreditsUpdate = (newCredits: number) => {
+    setCredits(newCredits);
+    console.log("Credits updated to:", newCredits);
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center transition-colors" style={darkMode ? darkBg : animeBg}>
@@ -85,7 +96,7 @@ const MenuPage: React.FC = () => {
           Buat Gambar
         </button>
 
-        <button className="w-full py-4 rounded-2xl font-bold text-white text-lg bg-gradient-to-r from-pink-500 to-yellow-400 shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-200 outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent" onClick={handleComingSoon}>
+        <button className="w-full py-4 rounded-2xl font-bold text-white text-lg bg-gradient-to-r from-pink-500 to-yellow-400 shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-200 outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent" onClick={handleNovelClick}>
           Bikin Novel
           <span className="ml-2 text-xs font-normal">Segera Hadir</span>
         </button>
@@ -94,6 +105,16 @@ const MenuPage: React.FC = () => {
           <span className="block mb-1 italic">Pilih fitur favoritmu untuk mulai berkreasi di MyKugy!</span>
         </div>
       </div>
+
+      {/* Render GenerateImagePage saat diperlukan */}
+      {router.pathname === "/generate-image" && (
+        <GenerateImagePage
+          onBack={() => router.push("/menu")}
+          email={email}
+          credits={credits}
+          onCreditsUpdate={handleCreditsUpdate}
+        />
+      )}
     </div>
   );
 };

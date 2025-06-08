@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { UiContext } from "./_app";
-import GenerateImagePage from "./GenerateImagePage"; // Pastikan import bener
 
 const animeBg = {
   background: "url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png') center/cover no-repeat",
@@ -63,12 +62,6 @@ const MenuPage: React.FC = () => {
     handleComingSoon("Bikin Novel");
   }
 
-  // Fungsi onCreditsUpdate buat pass ke GenerateImagePage
-  const handleCreditsUpdate = (newCredits: number) => {
-    setCredits(newCredits);
-    console.log("Credits updated to:", newCredits);
-  };
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center transition-colors" style={darkMode ? darkBg : animeBg}>
       <div className="bg-white/80 dark:bg-slate-800/90 rounded-3xl shadow-2xl px-8 py-10 w-full max-w-md mx-4 flex flex-col items-center border border-blue-200 dark:border-slate-600 relative">
@@ -105,16 +98,6 @@ const MenuPage: React.FC = () => {
           <span className="block mb-1 italic">Pilih fitur favoritmu untuk mulai berkreasi di MyKugy!</span>
         </div>
       </div>
-
-      {/* Render GenerateImagePage saat diperlukan */}
-      {router.pathname === "/generate-image" && (
-        <GenerateImagePage
-          onBack={() => router.push("/menu")}
-          email={email}
-          credits={credits}
-          onCreditsUpdate={handleCreditsUpdate}
-        />
-      )}
     </div>
   );
 };

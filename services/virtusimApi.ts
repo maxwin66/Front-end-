@@ -11,42 +11,45 @@ class VirtuSimAPI {
 
   async getServices(country?: string) {
     try {
-      // Sesuai dengan dokumentasi API
+      // Pastikan format parameter sesuai dengan dokumentasi
       const params = new URLSearchParams({
         api_key: this.apiKey,
         action: 'services',
         service: 'Whatsapp',
-        country: country || '' // jika country tidak ada, kirim string kosong
+        country: country || '' // Jika tidak ada country, kirim empty string
       });
 
-      const response = await fetch(`${this.baseUrl}?${params}`);
+      console.log('Request URL:', `${this.baseUrl}?${params}`); // Untuk debug
+
+      const response = await fetch(`${this.baseUrl}?${params}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
-      
-      // Response sesuai dokumentasi: { status: true, data: [...] }
+      console.log('API Response:', data); // Untuk debug
+
+      // Pastikan format response sesuai
       if (data.status === true && Array.isArray(data.data)) {
         return {
           status: true,
-          data: data.data.map((service: any) => ({
-            id: service.id,
-            name: service.name,
-            price: service.price,
-            is_promo: service.is_promo === "1",
-            tersedia: parseInt(service.tersedia),
-            country: service.country,
-            status: service.status === "1",
-            category: service.category
-          }))
+          data: data.data
         };
+      } else {
+        throw new Error(data.data?.msg || 'Invalid response format');
       }
-      
-      return data;
+
     } catch (error) {
       console.error('Failed to fetch services:', error);
       return {
         status: false,
-        data: {
-          msg: 'Failed to load services'
-        }
+        data: []
       };
     }
   }

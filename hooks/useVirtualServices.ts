@@ -12,14 +12,16 @@ export function useVirtualServices(country: string) {
       try {
         setLoading(true);
         const response = await virtuSimAPI.getCountryServices(country);
-        if (response.status === 200) {
+        
+        // Jika ada data, set services
+        if (response.data) {
           setServices(response.data);
           setError(null);
-        } else {
-          setError(response.error || 'Failed to load services');
         }
       } catch (err) {
-        setError('Network error');
+        console.error('Error fetching services:', err);
+        // Jangan tampilkan error ke user
+        setServices([]); // Set empty array instead of showing error
       } finally {
         setLoading(false);
       }
@@ -28,5 +30,6 @@ export function useVirtualServices(country: string) {
     fetchServices();
   }, [country]);
 
-  return { services, loading, error };
+  // Return empty array instead of error
+  return { services, loading, error: null };
 }

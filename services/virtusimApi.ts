@@ -11,25 +11,42 @@ class VirtuSimAPI {
 
   async getServices(country?: string) {
     try {
-      // Sesuai dengan format URL yang diberikan
+      // Sesuai dengan dokumentasi API
       const params = new URLSearchParams({
         api_key: this.apiKey,
         action: 'services',
-        service: 'Whatsapp'
+        service: 'Whatsapp',
+        country: country || '' // jika country tidak ada, kirim string kosong
       });
 
-      // Tambahkan country jika ada
-      if (country) {
-        params.append('country', country);
-      }
-
       const response = await fetch(`${this.baseUrl}?${params}`);
-      return await response.json();
+      const data = await response.json();
+      
+      // Response sesuai dokumentasi: { status: true, data: [...] }
+      if (data.status === true && Array.isArray(data.data)) {
+        return {
+          status: true,
+          data: data.data.map((service: any) => ({
+            id: service.id,
+            name: service.name,
+            price: service.price,
+            is_promo: service.is_promo === "1",
+            tersedia: parseInt(service.tersedia),
+            country: service.country,
+            status: service.status === "1",
+            category: service.category
+          }))
+        };
+      }
+      
+      return data;
     } catch (error) {
       console.error('Failed to fetch services:', error);
       return {
-        status: 'error',
-        message: 'Failed to fetch services'
+        status: false,
+        data: {
+          msg: 'Failed to load services'
+        }
       };
     }
   }

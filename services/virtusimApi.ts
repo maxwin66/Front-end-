@@ -1,27 +1,30 @@
+import { VIRTUSIM_API } from '../config/api';
+
 class VirtuSimAPI {
   private apiKey: string;
-  private baseUrl: string = 'https://virtusim.com/api/v2/json.php';
+  private baseUrl: string;
 
   constructor() {
-    this.apiKey = process.env.NEXT_PUBLIC_VIRTUSIM_API_KEY || '';
+    this.apiKey = VIRTUSIM_API.KEY;
+    this.baseUrl = VIRTUSIM_API.BASE_URL;
   }
 
   async getServices(country?: string) {
     try {
+      // Sesuai dengan format URL yang diberikan
       const params = new URLSearchParams({
         api_key: this.apiKey,
         action: 'services',
-        service: 'Whatsapp' // Bisa dijadikan parameter opsional jika perlu
+        service: 'Whatsapp'
       });
 
+      // Tambahkan country jika ada
       if (country) {
         params.append('country', country);
       }
 
       const response = await fetch(`${this.baseUrl}?${params}`);
-      const data = await response.json();
-      return data;
-
+      return await response.json();
     } catch (error) {
       console.error('Failed to fetch services:', error);
       return {

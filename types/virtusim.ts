@@ -1,16 +1,10 @@
 export interface VirtualService {
   id: string;
+  name: string;
+  price: string;
+  is_promo: boolean;
+  tersedia: number;
   country: string;
-  countryCode: string;
-  application: string;
-  type: 'PROMO' | 'REGULAR';
-  rate: number;
-  stock: number;
-  status: 'available' | 'unavailable';
-}
-
-export interface UserState {
-  login: string;
-  balance: number;
-  lastLogin: string;
+  status: boolean;
+  category: string;
 }

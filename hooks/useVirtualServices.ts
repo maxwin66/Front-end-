@@ -16,11 +16,12 @@ export function useVirtualServices(country?: string) {
           setServices(response.data);
           setError(null);
         } else {
+          console.error('Invalid services response:', response);
           setServices([]);
           setError('Failed to load services');
         }
       } catch (err) {
-        console.error('Error in useVirtualServices:', err);
+        console.error('Error fetching services:', err);
         setServices([]);
         setError('Failed to load services');
       } finally {

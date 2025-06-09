@@ -1,75 +1,34 @@
-import { VIRTUSIM_API } from '../config/api';
-
-interface VirtuSimResponse {
-  status: number;
-  data?: any;
-  error?: string;
-}
-
 class VirtuSimAPI {
   private apiKey: string;
-  private baseUrl: string;
-  private user: string;
+  private baseUrl: string = 'https://virtusim.com/api/v2/json.php';
 
   constructor() {
-    this.apiKey = VIRTUSIM_API.KEY;
-    this.baseUrl = VIRTUSIM_API.BASE_URL;
-    this.user = 'lillysummer9794';
+    this.apiKey = process.env.NEXT_PUBLIC_VIRTUSIM_API_KEY || '';
   }
 
-  private getCurrentUTCTime() {
-    return new Date().toISOString().slice(0, 19).replace('T', ' ');
-  }
-
-  private async makeRequest(action: string, params: object = {}): Promise<VirtuSimResponse> {
+  async getServices(country?: string) {
     try {
-      const requestTime = this.getCurrentUTCTime();
-      console.log(`[${requestTime}] User ${this.user} - API Request: ${action}`);
-
-      const url = new URL(this.baseUrl);
-      const searchParams = new URLSearchParams({
+      const params = new URLSearchParams({
         api_key: this.apiKey,
-        action,
-        ...params
+        action: 'services',
+        service: 'Whatsapp' // Bisa dijadikan parameter opsional jika perlu
       });
 
-      const response = await fetch(`${url}?${searchParams}`);
+      if (country) {
+        params.append('country', country);
+      }
+
+      const response = await fetch(`${this.baseUrl}?${params}`);
       const data = await response.json();
-
-      console.log(`[${this.getCurrentUTCTime()}] User ${this.user} - API Response:`, {
-        action,
-        status: response.status,
-        success: !!data.success
-      });
-
       return data;
+
     } catch (error) {
-      console.error(`[${this.getCurrentUTCTime()}] User ${this.user} - API Error:`, {
-        action,
-        error
-      });
-      throw error;
+      console.error('Failed to fetch services:', error);
+      return {
+        status: 'error',
+        message: 'Failed to fetch services'
+      };
     }
-  }
-
-  async getServices() {
-    return this.makeRequest('getServices');
-  }
-
-  async getPrices() {
-    return this.makeRequest('getPrices');
-  }
-
-  async getBalance() {
-    return this.makeRequest('getBalance');
-  }
-
-  async getCountryServices(country: string) {
-    return this.makeRequest('getServices', { country });
-  }
-
-  async getStatus(id: string) {
-    return this.makeRequest('getStatus', { id });
   }
 }
 

@@ -1,14 +1,17 @@
 class VirtuSimAPI {
   async getServices(country?: string) {
     try {
-      // Menggunakan API route Next.js
-      const response = await fetch(`/api/virtusim?country=${country || ''}`);
+      // Add timestamp to prevent caching
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/virtusim?country=${country || ''}&_=${timestamp}`);
 
       if (!response.ok) {
+        console.error('API Response not OK:', response.status);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('API Response:', data); // Debug log
 
       if (data.status === true && Array.isArray(data.data)) {
         return {
@@ -16,6 +19,7 @@ class VirtuSimAPI {
           data: data.data
         };
       } else {
+        console.error('Invalid response format:', data);
         throw new Error(data.data?.msg || 'Invalid response format');
       }
 

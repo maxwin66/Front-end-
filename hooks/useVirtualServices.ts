@@ -11,17 +11,16 @@ export function useVirtualServices(country?: string) {
       try {
         setLoading(true);
         const response = await virtuSimAPI.getServices(country);
-        
+        console.log('Hook Response:', response); // Debug log
+
         if (response.status === true && Array.isArray(response.data)) {
           setServices(response.data);
           setError(null);
         } else {
-          console.error('Invalid services response:', response);
           setServices([]);
           setError('Failed to load services');
         }
       } catch (err) {
-        console.error('Error fetching services:', err);
         setServices([]);
         setError('Failed to load services');
       } finally {

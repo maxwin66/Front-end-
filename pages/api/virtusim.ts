@@ -1,34 +1,44 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Set CORS headers
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
 
-  if (req.method !== 'GET') {
-    return res.status(405).json({ status: false, data: { msg: 'Method not allowed' } });
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
   }
 
   const { country } = req.query;
   
   try {
-    // Gunakan environment variable yang benar (tanpa NEXT_PUBLIC_)
-    const apiKey = process.env.VIRTUSIM_API_KEY;
-    
+    // Menggunakan NEXT_PUBLIC_VIRTUSIM_API_KEY yang sudah ada
+    const apiKey = process.env.NEXT_PUBLIC_VIRTUSIM_API_KEY;
+    console.log('API Key exists:', !!apiKey); // Debug log
+
     if (!apiKey) {
-      throw new Error('API key not configured');
+      console.error('Missing API key');
+      return res.status(500).json({ 
+        status: false, 
+        data: { msg: 'API key not configured' } 
+      });
     }
 
     const params = new URLSearchParams({
       api_key: apiKey,
       action: 'services',
       service: 'Whatsapp',
-      country: country?.toString() || ''
+      country: typeof country === 'string' ? country : ''
     });
 
     const apiUrl = `https://virtusim.com/api/v2/json.php?${params}`;
-    console.log('Fetching from:', apiUrl); // Debug log
+    console.log('Requesting URL:', apiUrl.replace(apiKey, '[HIDDEN]')); // Log URL safely
 
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -38,18 +48,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
 
-    if (!response.ok) {
-      throw new Error(`API responded with status: ${response.status}`);
-    }
-    
+    console.log('VirtuSIM Response Status:', response.status); // Debug log
+
     const data = await response.json();
+    console.log('VirtuSIM Response Data:', data); // Debug log
+
     return res.status(200).json(data);
 
-  } catch (error) {
-    console.error('API Error:', error);
+  } catch (error: any) {
+    console.error('API Route Error:', error.message);
     return res.status(500).json({ 
       status: false, 
-      data: { msg: 'Failed to fetch services' } 
+      data: { 
+        msg: 'Failed to fetch services',
+        error: error.message
+      } 
     });
   }
 }

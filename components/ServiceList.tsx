@@ -1,6 +1,17 @@
 import { useState } from 'react';
 import { useVirtualServices } from '../hooks/useVirtualServices';
 
+interface Service {
+  id: string;
+  name: string;
+  price: string;
+  is_promo: string;
+  tersedia: string;
+  country: string;
+  status: string;
+  category: string;
+}
+
 export default function ServiceList() {
   const [country, setCountry] = useState('Indonesia');
   const { services, loading, error } = useVirtualServices(country);
@@ -18,6 +29,7 @@ export default function ServiceList() {
             className="border p-2 rounded"
           >
             <option value="Indonesia">Indonesia</option>
+            <option value="Russia">Russia</option>
           </select>
         </div>
         
@@ -49,7 +61,7 @@ export default function ServiceList() {
         </div>
       ) : (
         <div className="divide-y">
-          {services.map((service: any) => (
+          {services.map((service: Service) => (
             <div key={service.id} className="p-4 hover:bg-gray-50">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-4">
@@ -65,7 +77,7 @@ export default function ServiceList() {
                   <div>
                     <div className="font-medium">
                       {service.name}
-                      {service.is_promo && (
+                      {service.is_promo === "1" && (
                         <span className="ml-2 text-orange-500">🔥 PROMO</span>
                       )}
                     </div>
@@ -81,15 +93,15 @@ export default function ServiceList() {
                     Buy from {parseInt(service.price).toLocaleString()} IDR
                   </div>
                   <div className="text-sm text-gray-600">
-                    Stock: {service.tersedia.toLocaleString()} Pcs
+                    Stock: {parseInt(service.tersedia).toLocaleString()} Pcs
                   </div>
                   <button 
                     className={`mt-2 px-4 py-1 rounded transition-colors ${
-                      service.status 
+                      service.status === "1"
                         ? 'bg-emerald-500 hover:bg-emerald-600 text-white' 
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
-                    disabled={!service.status}
+                    disabled={service.status !== "1"}
                   >
                     Buy
                   </button>

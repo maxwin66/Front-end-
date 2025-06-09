@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Enable CORS
-  res.setHeader('Access-Control-Allow-Credentials', 'true'); // Ubah ke string
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
   res.setHeader(
@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   
   try {
     const apiKey = process.env.NEXT_PUBLIC_VIRTUSIM_API_KEY;
-    console.log('API Key exists:', !!apiKey); 
+    console.log('API Key exists:', !!apiKey);
 
     if (!apiKey) {
       console.error('Missing API key');
@@ -37,7 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     const apiUrl = `https://virtusim.com/api/v2/json.php?${params}`;
-    console.log('Requesting URL:', apiUrl.replace(apiKey, '[HIDDEN]')); 
+    console.log('Requesting URL:', apiUrl.replace(apiKey, '[HIDDEN]'));
 
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -48,9 +48,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     console.log('VirtuSIM Response Status:', response.status);
-
+    
     const data = await response.json();
-    console.log('VirtuSIM Response Data:', data);
+    console.log('VirtuSIM Response Data:', JSON.stringify(data, null, 2));
+
+    if (!data || !data.status) {
+      console.error('Invalid API response:', data);
+      return res.status(400).json({
+        status: false,
+        data: { msg: 'Invalid API response' }
+      });
+    }
 
     return res.status(200).json(data);
 

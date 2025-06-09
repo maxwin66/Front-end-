@@ -1,30 +1,19 @@
 class VirtuSimAPI {
   async getServices(country?: string) {
     try {
-      // Add timestamp to prevent caching
-      const timestamp = new Date().getTime();
-      const response = await fetch(`/api/virtusim?country=${country || ''}&_=${timestamp}`);
+      const response = await fetch(`/api/virtusim?country=${country || 'Indonesia'}`);
 
       if (!response.ok) {
-        console.error('API Response not OK:', response.status);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('API Response:', data); // Debug log
+      console.log('Service Data:', data); // Debug log
 
-      if (data.status === true && Array.isArray(data.data)) {
-        return {
-          status: true,
-          data: data.data
-        };
-      } else {
-        console.error('Invalid response format:', data);
-        throw new Error(data.data?.msg || 'Invalid response format');
-      }
+      return data;
 
     } catch (error) {
-      console.error('Failed to fetch services:', error);
+      console.error('Service Error:', error);
       return {
         status: false,
         data: []

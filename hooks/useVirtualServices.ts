@@ -1,50 +1,30 @@
 import { useState, useEffect } from 'react';
 import { virtuSimAPI } from '../services/virtusimApi';
-import { VirtualService } from '../types/virtusim';
 
-export function useVirtusim() {
-  const [services, setServices] = useState<VirtualService[]>([]);
+export function useVirtualServices(country?: string) {
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    loadServices();
-  }, []);
-
-  const loadServices = async () => {
-    try {
-      setLoading(true);
-      const response = await virtuSimAPI.getServices();
-      
-      if (response.status === 1) { // Success status dari API adalah 1
-        setServices(response.data || []);
-      } else {
-        setError(response.message);
+    const fetchServices = async () => {
+      try {
+        setLoading(true);
+        const response = await virtuSimAPI.getServices(country);
+        if (response.status === 'success') {
+          setServices(response.data);
+        } else {
+          throw new Error(response.message);
+        }
+      } catch (err) {
+        setError('Failed to load services');
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError('Failed to load services');
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  const orderService = async (serviceId: string, target?: string) => {
-    try {
-      const response = await virtuSimAPI.orderService({
-        service: serviceId,
-        target
-      });
-      return response;
-    } catch (err) {
-      return { status: 0, message: 'Order failed' };
-    }
-  };
+    fetchServices();
+  }, [country]);
 
-  return {
-    services,
-    loading,
-    error,
-    orderService,
-    refreshServices: loadServices
-  };
+  return { services, loading, error };
 }

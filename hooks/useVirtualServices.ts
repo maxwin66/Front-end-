@@ -1,35 +1,50 @@
 import { useState, useEffect } from 'react';
-import { VirtualService } from '../types/virtusim';
 import { virtuSimAPI } from '../services/virtusimApi';
+import { VirtualService } from '../types/virtusim';
 
-export function useVirtualServices(country: string) {
+export function useVirtusim() {
   const [services, setServices] = useState<VirtualService[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        setLoading(true);
-        const response = await virtuSimAPI.getCountryServices(country);
-        
-        // Jika ada data, set services
-        if (response.data) {
-          setServices(response.data);
-          setError(null);
-        }
-      } catch (err) {
-        console.error('Error fetching services:', err);
-        // Jangan tampilkan error ke user
-        setServices([]); // Set empty array instead of showing error
-      } finally {
-        setLoading(false);
+    loadServices();
+  }, []);
+
+  const loadServices = async () => {
+    try {
+      setLoading(true);
+      const response = await virtuSimAPI.getServices();
+      
+      if (response.status === 1) { // Success status dari API adalah 1
+        setServices(response.data || []);
+      } else {
+        setError(response.message);
       }
-    };
+    } catch (err) {
+      setError('Failed to load services');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchServices();
-  }, [country]);
+  const orderService = async (serviceId: string, target?: string) => {
+    try {
+      const response = await virtuSimAPI.orderService({
+        service: serviceId,
+        target
+      });
+      return response;
+    } catch (err) {
+      return { status: 0, message: 'Order failed' };
+    }
+  };
 
-  // Return empty array instead of error
-  return { services, loading, error: null };
+  return {
+    services,
+    loading,
+    error,
+    orderService,
+    refreshServices: loadServices
+  };
 }

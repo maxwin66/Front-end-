@@ -109,6 +109,15 @@ const MenuPage: React.FC = () => {
     router.push(`/generate-image?email=${encodeURIComponent(email)}&credits=${credits}`);
   };
 
+  // Handler baru untuk Virtual SIMs
+  const handleVirtualSimsClick = () => {
+    if (!credits || credits < 25) {
+      alert("Maaf, untuk membeli nomor virtual diperlukan minimal 25 kredit.");
+      return;
+    }
+    router.push(`/virtual-sims?email=${encodeURIComponent(email)}&credits=${credits}`);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={darkMode ? darkBg : animeBg}>
@@ -178,10 +187,23 @@ const MenuPage: React.FC = () => {
 
         <button 
           onClick={() => handleComingSoon("Bikin Novel")}
-          className="w-full py-4 rounded-2xl font-bold text-white text-lg bg-gradient-to-r from-pink-500 to-yellow-400 shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-200"
+          className="w-full mb-4 py-4 rounded-2xl font-bold text-white text-lg bg-gradient-to-r from-pink-500 to-yellow-400 shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-200"
         >
           Bikin Novel
           <span className="ml-2 text-xs font-normal">Segera Hadir</span>
+        </button>
+
+        {/* Tombol Virtual SIMs baru */}
+        <button 
+          onClick={handleVirtualSimsClick}
+          className="w-full py-4 rounded-2xl font-bold text-white text-lg bg-gradient-to-r from-violet-500 to-purple-400 shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-200"
+        >
+          Virtual SIMs
+          {(credits || 0) < 25 && (
+            <span className="block text-xs font-normal mt-1">
+              Butuh 25 kredit
+            </span>
+          )}
         </button>
 
         <div className="mt-8 text-center text-sm text-gray-400 dark:text-gray-300">

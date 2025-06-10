@@ -1,27 +1,31 @@
 class VirtuSimAPI {
-  async getServices(country: string = 'Russia', service: string = '') {
+  private readonly apiUrl = '/api/virtusim/services';
+
+  async getServices() {
     try {
-      // Gunakan Next.js API route
-      const response = await fetch(`/api/virtusim/services?country=${country}&service=${service}`);
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       
       if (!response.ok) {
-        throw new Error('API request failed');
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-
+      
       const data = await response.json();
-      return {
-        ...data,
-        timestamp: "2025-06-10 23:34:34",
-        user: "lillysummer9794"
-      };
+      console.log('Service data:', data);
+      
+      return data;
 
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Service fetch error:', error);
       return {
         status: false,
         data: [],
-        timestamp: "2025-06-10 23:34:34",
-        user: "lillysummer9794"
+        timestamp: '2025-06-10 23:47:44',
+        user: 'lillysummer9794'
       };
     }
   }

@@ -29,55 +29,57 @@ const MenuPage: React.FC = () => {
         const storedEmail = localStorage.getItem("user_email");
         const params = new URLSearchParams(window.location.search);
         const urlEmail = params.get("email");
-        const urlCredits = params.get("credits");
+
+        // Jika dapat email dari URL dan belum ada di localStorage
+        if (urlEmail && !storedEmail) {
+          localStorage.setItem("user_email", urlEmail);
+          setEmail(urlEmail);
+        }
 
         // Improved validation for auth state
-        if (!token || !storedEmail) {
-          console.log("No token or email found, redirecting to home");
-          // Clear any partial auth state
-          sessionStorage.removeItem("token");
-          localStorage.removeItem("user_email");
+        if (!token && !storedEmail && !urlEmail) {
+          console.log("No auth found, redirecting to home");
           router.push("/");
           return;
         }
 
-        // Verify email consistency
-        if (urlEmail && urlEmail !== storedEmail) {
-          console.log("Email mismatch, using stored email");
-        }
-
+        const emailToUse = storedEmail || urlEmail;
+        
         try {
           // Verifikasi credits dengan backend
           const response = await fetch(
-            `${BACKEND_URL}/api/credits?user_email=${encodeURIComponent(storedEmail)}`
+            `${BACKEND_URL}/api/credits?user_email=${encodeURIComponent(emailToUse)}`
           );
           const data = await response.json();
 
           if (response.ok) {
             setCredits(parseInt(data.credits));
-            setEmail(storedEmail);
+            // Simpan credits di localStorage
+            localStorage.setItem("user_credits", data.credits);
+            setEmail(emailToUse);
           } else {
-            // If API returns error, try fallback to URL credits
-            if (urlCredits) {
-              console.log("Using URL credits as fallback");
-              setCredits(parseInt(urlCredits));
-              setEmail(storedEmail);
+            const storedCredits = localStorage.getItem("user_credits");
+            if (storedCredits) {
+              setCredits(parseInt(storedCredits));
             } else {
-              throw new Error(data.error || "Failed to fetch credits");
+              // Set default credits based on email type
+              const defaultCredits = emailToUse.includes("@guest.kugy.ai") ? 25 : 75;
+              setCredits(defaultCredits);
+              localStorage.setItem("user_credits", String(defaultCredits));
             }
           }
         } catch (error) {
           console.error("Error fetching credits:", error);
-          // Only use URL credits as last resort
-          if (urlCredits) {
-            setCredits(parseInt(urlCredits));
-            setEmail(storedEmail);
+          const storedCredits = localStorage.getItem("user_credits");
+          if (storedCredits) {
+            setCredits(parseInt(storedCredits));
           } else {
-            // For guest users, provide minimum credits
-            setCredits(storedEmail.includes("@guest.kugy.ai") ? 25 : 75);
-            setEmail(storedEmail);
+            const defaultCredits = emailToUse.includes("@guest.kugy.ai") ? 25 : 75;
+            setCredits(defaultCredits);
+            localStorage.setItem("user_credits", String(defaultCredits));
           }
         }
+
       } catch (error) {
         console.error("Auth check error:", error);
         setError("Terjadi kesalahan. Silakan coba login kembali.");
@@ -88,6 +90,14 @@ const MenuPage: React.FC = () => {
 
     checkAuth();
   }, [router]);
+
+  const handleLogout = () => {
+    // Clear all auth data
+    sessionStorage.removeItem("token");
+    localStorage.removeItem("user_email");
+    localStorage.removeItem("user_credits");
+    router.push("/");
+  };
 
   const handleComingSoon = (feature: string) => {
     window.alert(`Fitur "${feature}" akan segera hadir di MyKugy! Nantikan update berikutnya ya!`);
@@ -109,7 +119,6 @@ const MenuPage: React.FC = () => {
     router.push(`/generate-image?email=${encodeURIComponent(email)}&credits=${credits}`);
   };
 
-  // Handler baru untuk Virtual SIMs
   const handleVirtualSimsClick = () => {
     if (!credits || credits < 25) {
       alert("Maaf, untuk membeli nomor virtual diperlukan minimal 25 kredit.");
@@ -186,17 +195,8 @@ const MenuPage: React.FC = () => {
         </button>
 
         <button 
-          onClick={() => handleComingSoon("Bikin Novel")}
-          className="w-full mb-4 py-4 rounded-2xl font-bold text-white text-lg bg-gradient-to-r from-pink-500 to-yellow-400 shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-200"
-        >
-          Bikin Novel
-          <span className="ml-2 text-xs font-normal">Segera Hadir</span>
-        </button>
-
-        {/* Tombol Virtual SIMs baru */}
-        <button 
           onClick={handleVirtualSimsClick}
-          className="w-full py-4 rounded-2xl font-bold text-white text-lg bg-gradient-to-r from-violet-500 to-purple-400 shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-200"
+          className="w-full mb-4 py-4 rounded-2xl font-bold text-white text-lg bg-gradient-to-r from-violet-500 to-purple-400 shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-200"
         >
           Virtual SIMs
           {(credits || 0) < 25 && (
@@ -206,14 +206,18 @@ const MenuPage: React.FC = () => {
           )}
         </button>
 
+        <button 
+          onClick={() => handleComingSoon("Bikin Novel")}
+          className="w-full py-4 rounded-2xl font-bold text-white text-lg bg-gradient-to-r from-pink-500 to-yellow-400 shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-200"
+        >
+          Bikin Novel
+          <span className="ml-2 text-xs font-normal">Segera Hadir</span>
+        </button>
+
         <div className="mt-8 text-center text-sm text-gray-400 dark:text-gray-300">
           <span className="block mb-1 italic">Pilih fitur favoritmu untuk mulai berkreasi di MyKugy!</span>
           <button
-            onClick={() => {
-              sessionStorage.removeItem("token");
-              localStorage.removeItem("user_email");
-              router.push("/");
-            }}
+            onClick={handleLogout}
             className="mt-4 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 underline"
           >
             Logout

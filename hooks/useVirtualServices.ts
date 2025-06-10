@@ -16,10 +16,20 @@ export interface VirtualService {
   price_formatted?: string;
 }
 
-const useVirtualServices = (country: string) => {
+export interface ServiceResponse {
+  services: VirtualService[];
+  loading: boolean;
+  error: string | null;
+  timestamp: string;
+  user: string;
+}
+
+const useVirtualServices = (country: string): ServiceResponse => {
   const [services, setServices] = useState<VirtualService[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [timestamp] = useState("2025-06-10 23:07:10");
+  const [user] = useState("lillysummer9794");
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -80,7 +90,13 @@ const useVirtualServices = (country: string) => {
     fetchServices();
   }, [country]);
 
-  return { services, loading, error };
+  return { 
+    services, 
+    loading, 
+    error,
+    timestamp,
+    user
+  };
 };
 
 export default useVirtualServices;

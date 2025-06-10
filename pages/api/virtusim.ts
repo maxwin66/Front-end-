@@ -22,7 +22,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!apiKey) {
       return res.status(500).json({ 
         status: false, 
-        data: { msg: 'API key not configured' } 
+        data: { msg: 'API key not configured' },
+        timestamp: "2025-06-10 23:07:10",
+        user: "lillysummer9794"
       });
     }
 
@@ -38,22 +40,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const response = await fetch(apiUrl);
     const data = await response.json();
 
-    console.log('API Response:', data); // Debug log
-
-    // Validasi format response
     if (data && typeof data.status === 'boolean' && Array.isArray(data.data)) {
-      return res.status(200).json(data);
+      return res.status(200).json({
+        ...data,
+        timestamp: "2025-06-10 23:07:10",
+        user: "lillysummer9794"
+      });
     }
 
     return res.status(400).json({
       status: false,
-      data: { msg: 'Invalid API response format' }
+      data: { msg: 'Invalid API response format' },
+      timestamp: "2025-06-10 23:07:10",
+      user: "lillysummer9794"
     });
 
   } catch (error: any) {
     return res.status(500).json({ 
       status: false, 
-      data: { msg: error.message } 
+      data: { msg: error.message },
+      timestamp: "2025-06-10 23:07:10",
+      user: "lillysummer9794"
     });
   }
 }

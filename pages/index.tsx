@@ -17,7 +17,7 @@ const animeQuotes = [
 const texts = {
   start: "Mulai",
   carousel: [
-    "🎁 Login Google - 75 Kredit | Guest - 25 Kredit!", // Updated to show both credit amounts
+    "🎁 Login Google - 75 Kredit | Guest - 25 Kredit!", 
     "🚀 Login dengan Google atau Sebagai Tamu",
     "💬 Chat AI Karakter Anime 24/7",
     "✨ Privasi Aman & Tampilan Premium",
@@ -47,13 +47,16 @@ const IndexPage: React.FC = () => {
   const [blurTrans, setBlurTrans] = useState(false);
   const [parallax, setParallax] = useState({ x: 0, y: 0 });
   const [quoteIdx, setQuoteIdx] = useState(Math.floor(Math.random() * animeQuotes.length));
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const { darkMode } = useContext(UiContext);
 
   useEffect(() => {
-    // Clear any existing session data
+    // Clear any existing auth data on initial load
     sessionStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem('user_email');
+    localStorage.removeItem('user_credits');
   }, []);
 
   useEffect(() => {
@@ -107,6 +110,70 @@ const IndexPage: React.FC = () => {
     }, 450);
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      // Clear any existing auth data
+      sessionStorage.removeItem("token");
+      localStorage.removeItem("user_email");
+      localStorage.removeItem("user_credits");
+      
+      // Redirect to Google OAuth
+      window.location.href = `${BACKEND_URL}/auth/google`;
+    } catch (error) {
+      console.error('Google login error:', error);
+      setError('Failed to login with Google');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGuestLogin = async () => {
+    try {
+      setLoading(true);
+      // Generate unique guest email with timestamp and random string
+      const timestamp = Date.now();
+      const randomString = Math.random().toString(36).substring(2, 8);
+      const guestEmail = `guest_${timestamp}_${randomString}@guest.kugy.ai`;
+
+      const response = await fetch(`${BACKEND_URL}/api/guest-login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: guestEmail }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.token) {
+        // Save auth data
+        localStorage.setItem('user_email', guestEmail);
+        sessionStorage.setItem('token', data.token);
+        localStorage.setItem('user_credits', '25'); // Default guest credits
+        
+        // Redirect to menu
+        router.push(`/menu?email=${encodeURIComponent(guestEmail)}&credits=25`);
+      } else {
+        throw new Error(data.error || 'Failed to login as guest');
+      }
+    } catch (error) {
+      console.error('Guest login error:', error);
+      setError('Failed to login as guest');
+      
+      // Fallback for development only
+      if (process.env.NODE_ENV === 'development') {
+        const dummyToken = "guest-token-" + Math.random().toString(36).substring(7);
+        sessionStorage.setItem("token", dummyToken);
+        localStorage.setItem("user_email", guestEmail);
+        localStorage.setItem('user_credits', '25');
+        router.push(`/menu?email=${encodeURIComponent(guestEmail)}&credits=25`);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (step === "start") {
     return (
       <div
@@ -126,15 +193,25 @@ const IndexPage: React.FC = () => {
         </div>
 
         <div className="absolute top-14 left-0 right-0 flex flex-col items-center z-10">
-          <div className="text-2xl font-extrabold drop-shadow-lg tracking-wider" style={{ color: "#38bdf8", textShadow: "0 2px 8px #0369a1cc" }}>
+          <div 
+            className="text-2xl font-extrabold drop-shadow-lg tracking-wider" 
+            style={{ color: "#38bdf8", textShadow: "0 2px 8px #0369a1cc" }}
+          >
             MyKugy Ai Chat Anime
           </div>
         </div>
 
         <div className="flex flex-1 items-center justify-center">
-          <div className={`bg-white/30 ${darkMode ? 'bg-opacity-10' : 'backdrop-blur-2xl'} rounded-3xl shadow-2xl p-8 flex flex-col items-center min-w-[320px] max-w-[94vw] w-full mx-2 border border-blue-200/50 dark:border-blue-500/20 relative animate-glow`}>
+          <div 
+            className={`bg-white/30 ${
+              darkMode ? 'bg-opacity-10' : 'backdrop-blur-2xl'
+            } rounded-3xl shadow-2xl p-8 flex flex-col items-center min-w-[320px] max-w-[94vw] w-full mx-2 border border-blue-200/50 dark:border-blue-500/20 relative animate-glow`}
+          >
             <div className="mb-6 w-full">
-              <div className="text-md" style={{ color: "#38bdf8", fontWeight: 700, textAlign: "center" }}>
+              <div 
+                className="text-md" 
+                style={{ color: "#38bdf8", fontWeight: 700, textAlign: "center" }}
+              >
                 {texts.carousel[featureIdx]}
               </div>
               <div className="w-full h-1 bg-blue-100 rounded-full mt-1">
@@ -147,20 +224,28 @@ const IndexPage: React.FC = () => {
 
             <button
               onClick={handleStart}
-              disabled={blurTrans}
+              disabled={blurTrans || loading}
               className="px-16 py-4 text-2xl rounded-full font-bold bg-gradient-to-r from-blue-400 to-sky-400 shadow-xl text-white hover:scale-105 hover:shadow-2xl transition-all duration-300 focus:outline-none disabled:opacity-50"
             >
-              {texts.start}
+              {loading ? 'Loading...' : texts.start}
             </button>
 
             {blurTrans && (
               <div className="absolute inset-0 bg-white/60 backdrop-blur-md rounded-3xl transition-all duration-300" />
             )}
 
+            {error && (
+              <div className="mt-4 text-red-500 text-sm text-center">
+                {error}
+              </div>
+            )}
+
             <div className="mt-7 mb-2 w-full flex flex-col items-center">
               <div className="text-xs italic text-blue-900 text-center max-w-xs transition-all duration-500">
                 "{animeQuotes[quoteIdx].text}"{" "}
-                <span className="not-italic font-bold text-blue-600">- {animeQuotes[quoteIdx].author}</span>
+                <span className="not-italic font-bold text-blue-600">
+                  - {animeQuotes[quoteIdx].author}
+                </span>
               </div>
             </div>
           </div>
@@ -172,7 +257,12 @@ const IndexPage: React.FC = () => {
               {texts.version} v1.0.0 Beta
             </span>
             <span>|</span>
-            <a href="https://instagram.com/yourbrand" target="_blank" rel="noopener noreferrer" className="hover:text-blue-300 transition">
+            <a 
+              href="https://instagram.com/yourbrand" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="hover:text-blue-300 transition"
+            >
               Instagram
             </a>
             <span>|</span>
@@ -202,37 +292,10 @@ const IndexPage: React.FC = () => {
       <>
         <ParticlesBackground darkMode={darkMode} />
         <HomeSelect
-          onGoogle={() => {
-            if (typeof window !== "undefined") {
-              window.location.href = `${BACKEND_URL}/auth/google`;
-            }
-          }}
-          onGuest={async () => {
-            const guestEmail = `guest_${Math.random().toString(36).substr(2, 9)}@guest.kugy.ai`;
-            try {
-              const response = await fetch(`${BACKEND_URL}/api/guest-login`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: guestEmail }),
-              });
-              
-              const data = await response.json();
-              if (response.ok && data.token) {
-                sessionStorage.setItem("token", data.token);
-                localStorage.setItem("user_email", guestEmail);
-                router.push(`/menu?email=${encodeURIComponent(guestEmail)}&credits=25`);
-              } else {
-                throw new Error(data.error || "No token received");
-              }
-            } catch (error) {
-              console.error("Guest login error:", error);
-              // Fallback untuk development
-              const dummyToken = "guest-token-" + guestEmail;
-              sessionStorage.setItem("token", dummyToken);
-              localStorage.setItem("user_email", guestEmail);
-              router.push(`/menu?email=${encodeURIComponent(guestEmail)}&credits=25`);
-            }
-          }}
+          onGoogle={handleGoogleLogin}
+          onGuest={handleGuestLogin}
+          loading={loading}
+          error={error}
           bgStyle={darkMode ? darkBg : animeBg}
         />
       </>

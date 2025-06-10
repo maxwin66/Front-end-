@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const BACKEND_URL = "https://backend-cb98.onrender.com";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://backend-cb98.onrender.com";
 
 export interface VirtualService {
   id: string;
@@ -21,11 +21,16 @@ const useVirtualServices = (country: string) => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        // Only run on client-side
         if (typeof window === 'undefined') return;
 
         const email = window.localStorage.getItem('user_email');
         const token = window.sessionStorage.getItem('token');
+
+        // Debug info
+        alert(`Debug Info:
+Email: ${email}
+Token: ${token?.substring(0, 10)}...
+Country: ${country}`);
 
         if (!email || !token) {
           setError('Authentication required');
@@ -44,6 +49,12 @@ const useVirtualServices = (country: string) => {
         );
 
         const data = await response.json();
+        
+        // Debug response
+        alert(`API Response:
+Status: ${response.status}
+OK: ${response.ok}
+Data: ${JSON.stringify(data, null, 2)}`);
 
         if (response.ok && data.status === 'success') {
           const transformedServices = data.data.map((service: any) => ({
@@ -57,6 +68,11 @@ const useVirtualServices = (country: string) => {
             status: service.status.toLowerCase() === 'available' ? 'available' : 'unavailable'
           }));
           
+          // Debug transformed data
+          alert(`Transformed Services:
+Count: ${transformedServices.length}
+First Service: ${JSON.stringify(transformedServices[0], null, 2)}`);
+          
           setServices(transformedServices);
           setError(null);
         } else {
@@ -64,6 +80,7 @@ const useVirtualServices = (country: string) => {
           setServices([]);
         }
       } catch (error) {
+        alert(`Error: ${error}`);
         console.error('Fetch error:', error);
         setError('Network error');
         setServices([]);

@@ -11,6 +11,9 @@ export interface VirtualService {
   rate: number;
   stock: number;
   status: 'available' | 'unavailable';
+  description?: string;
+  duration?: string;
+  price_formatted?: string;
 }
 
 const useVirtualServices = (country: string) => {
@@ -33,7 +36,7 @@ const useVirtualServices = (country: string) => {
         }
 
         const response = await fetch(
-          `${BACKEND_URL}/api/virtusim/services?country=${encodeURIComponent(country)}&email=${encodeURIComponent(email)}`,
+          `${BACKEND_URL}/api/virtusim/services?country=${encodeURIComponent(country)}`,
           {
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -44,27 +47,25 @@ const useVirtualServices = (country: string) => {
 
         const data = await response.json();
 
-        // Jika response OK tapi data kosong, tampilkan pesan yang lebih informatif
-        if (response.ok) {
-          if (Array.isArray(data.data) && data.data.length > 0) {
-            const transformedServices = data.data.map((service: any) => ({
-              id: service.service_id,
-              application: service.name,
-              country: service.country,
-              countryCode: service.country.slice(0, 2).toUpperCase(),
-              type: service.price > 10000 ? 'PREMIUM' : 'REGULAR',
-              rate: parseFloat(service.price),
-              stock: service.available_numbers,
-              status: service.status.toLowerCase() === 'available' ? 'available' : 'unavailable'
-            }));
-            setServices(transformedServices);
-            setError(null);
-          } else {
-            setServices([]);
-            setError('No services available for this country at the moment');
-          }
+        if (response.ok && data.status === 'success' && Array.isArray(data.data)) {
+          const transformedServices = data.data.map((service: any) => ({
+            id: service.service_id,
+            application: service.name,
+            description: service.description,
+            country: service.country,
+            countryCode: country.slice(0, 2).toUpperCase(),
+            type: parseFloat(service.price) > 10000 ? 'PREMIUM' : 'REGULAR',
+            rate: parseFloat(service.price),
+            stock: service.available_numbers,
+            status: service.status.toLowerCase() === 'available' ? 'available' : 'unavailable',
+            duration: service.duration,
+            price_formatted: service.price_formatted
+          }));
+          
+          setServices(transformedServices);
+          setError(null);
         } else {
-          setError(data.message || 'Failed to fetch services');
+          setError(data.message || 'No services available for this country at the moment');
           setServices([]);
         }
       } catch (error) {

@@ -26,12 +26,6 @@ const useVirtualServices = (country: string) => {
         const email = window.localStorage.getItem('user_email');
         const token = window.sessionStorage.getItem('token');
 
-        // Debug info
-        alert(`Debug Info:
-Email: ${email}
-Token: ${token?.substring(0, 10)}...
-Country: ${country}`);
-
         if (!email || !token) {
           setError('Authentication required');
           setLoading(false);
@@ -49,38 +43,31 @@ Country: ${country}`);
         );
 
         const data = await response.json();
-        
-        // Debug response
-        alert(`API Response:
-Status: ${response.status}
-OK: ${response.ok}
-Data: ${JSON.stringify(data, null, 2)}`);
 
-        if (response.ok && data.status === 'success') {
-          const transformedServices = data.data.map((service: any) => ({
-            id: service.service_id,
-            application: service.name,
-            country: service.country,
-            countryCode: service.country.slice(0, 2).toUpperCase(),
-            type: service.price > 10000 ? 'PREMIUM' : 'REGULAR',
-            rate: parseFloat(service.price),
-            stock: service.available_numbers,
-            status: service.status.toLowerCase() === 'available' ? 'available' : 'unavailable'
-          }));
-          
-          // Debug transformed data
-          alert(`Transformed Services:
-Count: ${transformedServices.length}
-First Service: ${JSON.stringify(transformedServices[0], null, 2)}`);
-          
-          setServices(transformedServices);
-          setError(null);
+        // Jika response OK tapi data kosong, tampilkan pesan yang lebih informatif
+        if (response.ok) {
+          if (Array.isArray(data.data) && data.data.length > 0) {
+            const transformedServices = data.data.map((service: any) => ({
+              id: service.service_id,
+              application: service.name,
+              country: service.country,
+              countryCode: service.country.slice(0, 2).toUpperCase(),
+              type: service.price > 10000 ? 'PREMIUM' : 'REGULAR',
+              rate: parseFloat(service.price),
+              stock: service.available_numbers,
+              status: service.status.toLowerCase() === 'available' ? 'available' : 'unavailable'
+            }));
+            setServices(transformedServices);
+            setError(null);
+          } else {
+            setServices([]);
+            setError('No services available for this country at the moment');
+          }
         } else {
           setError(data.message || 'Failed to fetch services');
           setServices([]);
         }
       } catch (error) {
-        alert(`Error: ${error}`);
         console.error('Fetch error:', error);
         setError('Network error');
         setServices([]);

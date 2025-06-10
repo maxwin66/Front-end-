@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Base Styles */
+:root {
+  --primary: #3b82f6;
+  --primary-dark: #2563eb;
+  --secondary: #8b5cf6;
+  --secondary-dark: #7c3aed;
+  --background: #ffffff;
+  --background-dark: #0f172a;
+  --text: #1f2937;
+  --text-dark: #f3f4f6;
+}
+
+.dark {
+  --primary: #60a5fa;
+  --primary-dark: #3b82f6;
+  --secondary: #a78bfa;
+  --secondary-dark: #8b5cf6;
+  --background: #0f172a;
+  --background-dark: #020617;
+  --text: #f3f4f6;
+  --text-dark: #1f2937;
+}
+
 /* Gradient Animation */
 @keyframes gradient-xy {
   0% {
@@ -23,16 +46,16 @@
 /* Glow Animation */
 @keyframes glow {
   0% {
-    box-shadow: 0 0 20px 3px rgba(59, 130, 246, 0.5),
-                0 0 40px 7px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 0 20px 3px rgba(var(--primary), 0.5),
+                0 0 40px 7px rgba(var(--primary), 0.4);
   }
   50% {
-    box-shadow: 0 0 25px 5px rgba(59, 130, 246, 0.6),
-                0 0 50px 10px rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 25px 5px rgba(var(--primary), 0.6),
+                0 0 50px 10px rgba(var(--primary), 0.5);
   }
   100% {
-    box-shadow: 0 0 20px 3px rgba(59, 130, 246, 0.5),
-                0 0 40px 7px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 0 20px 3px rgba(var(--primary), 0.5),
+                0 0 40px 7px rgba(var(--primary), 0.4);
   }
 }
 
@@ -107,17 +130,17 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(var(--text), 0.1);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(59, 130, 246, 0.5);
+  background: rgba(var(--primary), 0.5);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(59, 130, 246, 0.7);
+  background: rgba(var(--primary), 0.7);
 }
 
 /* Glass Effect */
@@ -128,14 +151,24 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.dark .glass {
+  background: rgba(15, 23, 42, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .glass:hover {
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+.dark .glass:hover {
+  background: rgba(15, 23, 42, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
 /* Text Gradient */
 .text-gradient {
-  background: linear-gradient(to right, #3b82f6, #8b5cf6);
+  background: linear-gradient(to right, var(--primary), var(--secondary));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -144,8 +177,8 @@
 /* Border Gradient */
 .border-gradient {
   border: double 2px transparent;
-  background-image: linear-gradient(white, white), 
-                    linear-gradient(to right, #3b82f6, #8b5cf6);
+  background-image: linear-gradient(var(--background), var(--background)), 
+                    linear-gradient(to right, var(--primary), var(--secondary));
   background-origin: border-box;
   background-clip: content-box, border-box;
 }
@@ -176,18 +209,27 @@
 
 /* Custom Selection */
 ::selection {
-  background: rgba(59, 130, 246, 0.3);
-  color: white;
+  background: rgba(var(--primary), 0.3);
+  color: var(--text);
+}
+
+.dark ::selection {
+  color: var(--text-dark);
 }
 
 /* Focus Ring */
 .focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-transparent;
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent;
 }
 
 /* Disable Tap Highlight on Mobile */
 * {
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Dark Mode Transitions */
+.app {
+  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
 }
 
 /* Custom Utility Classes */
@@ -206,5 +248,40 @@
   
   .text-shadow-lg {
     text-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  .dark .text-shadow-sm {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+  
+  .dark .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .dark .text-shadow-md {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.24);
+  }
+  
+  .dark .text-shadow-lg {
+    text-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Language-specific font settings */
+:root[lang="jp"] {
+  font-family: "Noto Sans JP", sans-serif;
+}
+
+/* Tailwind Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary: #60a5fa;
+    --primary-dark: #3b82f6;
+    --secondary: #a78bfa;
+    --secondary-dark: #8b5cf6;
+    --background: #0f172a;
+    --background-dark: #020617;
+    --text: #f3f4f6;
+    --text-dark: #1f2937;
   }
     }

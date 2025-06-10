@@ -1,38 +1,37 @@
 class VirtuSimAPI {
-  private getCurrentData() {
-    return {
-      timestamp: "2025-06-10 23:08:27",
-      user: "lillysummer9794"
-    };
-  }
+  private readonly API_URL = 'https://virtusim.com/api/v2/json.php';
+  private readonly API_KEY = process.env.NEXT_PUBLIC_VIRTUSIM_API_KEY;
 
-  async getServices(country?: string) {
+  async getServices(country: string = 'Indonesia') {
     try {
-      const response = await fetch(`/api/virtusim?country=${country || 'Indonesia'}`);
+      // Parameter sesuai dokumentasi Virtusim
+      const params = new URLSearchParams({
+        api_key: this.API_KEY || '',
+        action: 'getServices',    // Method untuk get list service
+        country: country,         // Filter by country
+        status: 'all'            // Ambil semua status
+      });
 
+      const response = await fetch(`${this.API_URL}?${params.toString()}`);
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error('Failed to fetch services');
       }
 
       const data = await response.json();
-      const { timestamp, user } = this.getCurrentData();
-      
-      // Data produk tetap ada, hanya menambahkan timestamp dan user
       return {
-        ...data,  // Semua data produk dari API tetap dipertahankan
-        timestamp,
-        user
+        ...data,
+        timestamp: "2025-06-10 23:23:09",
+        user: "lillysummer9794"
       };
 
     } catch (error) {
-      console.error('Service Error:', error);
-      const { timestamp, user } = this.getCurrentData();
-      
+      console.error('Error fetching services:', error);
       return {
         status: false,
-        data: [], // Kosong hanya jika ada error
-        timestamp,
-        user
+        data: [],
+        timestamp: "2025-06-10 23:23:09",
+        user: "lillysummer9794"
       };
     }
   }

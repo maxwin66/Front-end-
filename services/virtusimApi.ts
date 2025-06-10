@@ -1,4 +1,11 @@
 class VirtuSimAPI {
+  private getCurrentData() {
+    return {
+      timestamp: "2025-06-10 23:08:27",
+      user: "lillysummer9794"
+    };
+  }
+
   async getServices(country?: string) {
     try {
       const response = await fetch(`/api/virtusim?country=${country || 'Indonesia'}`);
@@ -8,15 +15,24 @@ class VirtuSimAPI {
       }
 
       const data = await response.json();
-      console.log('Service Data:', data); // Debug log
-
-      return data;
+      const { timestamp, user } = this.getCurrentData();
+      
+      // Data produk tetap ada, hanya menambahkan timestamp dan user
+      return {
+        ...data,  // Semua data produk dari API tetap dipertahankan
+        timestamp,
+        user
+      };
 
     } catch (error) {
       console.error('Service Error:', error);
+      const { timestamp, user } = this.getCurrentData();
+      
       return {
         status: false,
-        data: []
+        data: [], // Kosong hanya jika ada error
+        timestamp,
+        user
       };
     }
   }

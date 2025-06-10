@@ -5,6 +5,8 @@ import Image from "next/image";
 interface Props {
   onGoogle: () => void;
   onGuest: () => void;
+  loading: boolean;
+  error: string | null;
   bgStyle?: React.CSSProperties;
 }
 
@@ -21,10 +23,11 @@ const LANGUAGES: Language[] = [
   { code: 'jp', name: 'Japanese', flag: '🇯🇵', local: '日本語' }
 ];
 
-const HomeSelect: React.FC<Props> = ({ onGoogle, onGuest, bgStyle }) => {
+const HomeSelect: React.FC<Props> = ({ onGoogle, onGuest, loading, error, bgStyle }) => {
   const [theme, setTheme] = useState("light");
   const [showLanguages, setShowLanguages] = useState(false);
   const [currentLang, setCurrentLang] = useState<Language>(LANGUAGES[0]);
+  const [imgError, setImgError] = useState(false);
 
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light");
@@ -33,6 +36,17 @@ const HomeSelect: React.FC<Props> = ({ onGoogle, onGuest, bgStyle }) => {
   const handleLanguageSelect = (lang: Language) => {
     setCurrentLang(lang);
     setShowLanguages(false);
+  };
+
+  const getLoginButtonText = () => {
+    if (loading) {
+      return currentLang.code === 'jp' ? '読み込み中...' :
+             currentLang.code === 'en' ? 'Loading...' :
+             'Memuat...';
+    }
+    return currentLang.code === 'jp' ? 'Google でログイン' :
+           currentLang.code === 'en' ? 'Sign in with Google' :
+           'Daftar dengan Google';
   };
 
   return (
@@ -44,7 +58,8 @@ const HomeSelect: React.FC<Props> = ({ onGoogle, onGuest, bgStyle }) => {
           : "url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png')",
         backgroundSize: "cover",
         backgroundPosition: "center",
-        backgroundRepeat: "no-repeat"
+        backgroundRepeat: "no-repeat",
+        ...bgStyle
       }}
     >
       {/* Theme and Language Selectors */}
@@ -104,17 +119,13 @@ const HomeSelect: React.FC<Props> = ({ onGoogle, onGuest, bgStyle }) => {
           {/* Logo */}
           <div className="w-32 h-32 mb-4 relative">
             <Image
-              src="/logo.png"
+              src={imgError ? '/fallback-logo.png' : '/logo.png'}
               alt="MyKugy Logo"
               width={128}
               height={128}
               priority
               className="object-contain"
-              onError={(e) => {
-                const img = e.target as HTMLImageElement;
-                img.src = '/fallback-logo.png'; // Fallback image jika logo utama gagal load
-                console.error('Error loading logo:', e);
-              }}
+              onError={() => setImgError(true)}
             />
           </div>
 
@@ -127,22 +138,33 @@ const HomeSelect: React.FC<Props> = ({ onGoogle, onGuest, bgStyle }) => {
             MyKugy
           </p>
 
+          {/* Error Message */}
+          {error && (
+            <div className="w-full mb-4 p-3 bg-red-100 dark:bg-red-900/30 rounded-lg">
+              <p className="text-red-600 dark:text-red-400 text-sm text-center">{error}</p>
+            </div>
+          )}
+
           {/* Login Buttons */}
           <button
             onClick={onGoogle}
-            className="w-full py-3 mb-3 rounded-lg font-medium bg-[#4785FF] text-white hover:opacity-90 transition"
+            disabled={loading}
+            className="w-full py-3 mb-3 rounded-lg font-medium bg-[#4785FF] text-white hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {currentLang.code === 'jp' ? 'Google でログイン' :
-             currentLang.code === 'en' ? 'Sign in with Google' :
-             'Daftar dengan Google'}
+            {getLoginButtonText()}
           </button>
           <button
             onClick={onGuest}
-            className="w-full py-3 rounded-lg font-medium border-2 border-[#4785FF] text-[#4785FF] hover:bg-blue-50 transition"
+            disabled={loading}
+            className="w-full py-3 rounded-lg font-medium border-2 border-[#4785FF] text-[#4785FF] hover:bg-blue-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {currentLang.code === 'jp' ? 'ゲストとして始める' :
-             currentLang.code === 'en' ? 'Start as Guest' :
-             'Mulai Sebagai Tamu'}
+            {loading ? 
+              (currentLang.code === 'jp' ? '読み込み中...' :
+               currentLang.code === 'en' ? 'Loading...' :
+               'Memuat...') :
+              (currentLang.code === 'jp' ? 'ゲストとして始める' :
+               currentLang.code === 'en' ? 'Start as Guest' :
+               'Mulai Sebagai Tamu')}
           </button>
 
           {/* Credits Info */}

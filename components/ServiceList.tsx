@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { virtuSimAPI } from '../services/virtusimApi';
 
 interface Service {
-  id: string;
+  service_id: string;
   name: string;
   price: number;
+  price_formatted: string;
   available_numbers: number;
-  status: string;
   country: string;
+  status: string;
 }
 
 export default function ServiceList() {
@@ -16,7 +17,7 @@ export default function ServiceList() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchServices = async () => {
+    const loadServices = async () => {
       try {
         setLoading(true);
         const result = await virtuSimAPI.getServices();
@@ -33,22 +34,22 @@ export default function ServiceList() {
       }
     };
 
-    fetchServices();
+    loadServices();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div>Loading services...</div>;
   if (error) return <div>{error}</div>;
   if (!services.length) return <div>No services available</div>;
 
   return (
-    <div className="grid gap-4 p-4">
+    <div className="grid gap-4">
       {services.map((service) => (
-        <div key={service.id} className="border p-4 rounded">
+        <div key={service.service_id} className="border p-4 rounded">
           <h3 className="font-bold">{service.name}</h3>
-          <p>Country: {service.country}</p>
-          <p>Price: {service.price}</p>
-          <p>Available: {service.available_numbers}</p>
-          <p>Status: {service.status}</p>
+          <div>Price: {service.price_formatted}</div>
+          <div>Available: {service.available_numbers}</div>
+          <div>Country: {service.country}</div>
+          <div>Status: {service.status}</div>
         </div>
       ))}
     </div>

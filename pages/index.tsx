@@ -17,7 +17,7 @@ const animeQuotes = [
 const texts = {
   start: "Mulai",
   carousel: [
-    "🎁 Login Google - 75 Kredit | Guest - 25 Kredit!", 
+    "🎁 Login Google - 75 Kredit | Guest - 25 Kredit!",
     "🚀 Login dengan Google atau Sebagai Tamu",
     "💬 Chat AI Karakter Anime 24/7",
     "✨ Privasi Aman & Tampilan Premium",
@@ -53,7 +53,7 @@ const IndexPage: React.FC = () => {
   const { darkMode } = useContext(UiContext);
 
   useEffect(() => {
-    // Clear any existing auth data on initial load
+    // Clear any existing session data
     sessionStorage.removeItem('token');
     localStorage.removeItem('user_email');
     localStorage.removeItem('user_credits');
@@ -108,70 +108,6 @@ const IndexPage: React.FC = () => {
       setBlurTrans(false);
       setStep("select");
     }, 450);
-  };
-
-  const handleGoogleLogin = async () => {
-    try {
-      setLoading(true);
-      // Clear any existing auth data
-      sessionStorage.removeItem("token");
-      localStorage.removeItem("user_email");
-      localStorage.removeItem("user_credits");
-      
-      // Redirect to Google OAuth
-      window.location.href = `${BACKEND_URL}/auth/google`;
-    } catch (error) {
-      console.error('Google login error:', error);
-      setError('Failed to login with Google');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGuestLogin = async () => {
-    try {
-      setLoading(true);
-      // Generate unique guest email with timestamp and random string
-      const timestamp = Date.now();
-      const randomString = Math.random().toString(36).substring(2, 8);
-      const guestEmail = `guest_${timestamp}_${randomString}@guest.kugy.ai`;
-
-      const response = await fetch(`${BACKEND_URL}/api/guest-login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: guestEmail }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.token) {
-        // Save auth data
-        localStorage.setItem('user_email', guestEmail);
-        sessionStorage.setItem('token', data.token);
-        localStorage.setItem('user_credits', '25'); // Default guest credits
-        
-        // Redirect to menu
-        router.push(`/menu?email=${encodeURIComponent(guestEmail)}&credits=25`);
-      } else {
-        throw new Error(data.error || 'Failed to login as guest');
-      }
-    } catch (error) {
-      console.error('Guest login error:', error);
-      setError('Failed to login as guest');
-      
-      // Fallback for development only
-      if (process.env.NODE_ENV === 'development') {
-        const dummyToken = "guest-token-" + Math.random().toString(36).substring(7);
-        sessionStorage.setItem("token", dummyToken);
-        localStorage.setItem("user_email", guestEmail);
-        localStorage.setItem('user_credits', '25');
-        router.push(`/menu?email=${encodeURIComponent(guestEmail)}&credits=25`);
-      }
-    } finally {
-      setLoading(false);
-    }
   };
 
   if (step === "start") {
@@ -234,12 +170,6 @@ const IndexPage: React.FC = () => {
               <div className="absolute inset-0 bg-white/60 backdrop-blur-md rounded-3xl transition-all duration-300" />
             )}
 
-            {error && (
-              <div className="mt-4 text-red-500 text-sm text-center">
-                {error}
-              </div>
-            )}
-
             <div className="mt-7 mb-2 w-full flex flex-col items-center">
               <div className="text-xs italic text-blue-900 text-center max-w-xs transition-all duration-500">
                 "{animeQuotes[quoteIdx].text}"{" "}
@@ -292,8 +222,61 @@ const IndexPage: React.FC = () => {
       <>
         <ParticlesBackground darkMode={darkMode} />
         <HomeSelect
-          onGoogle={handleGoogleLogin}
-          onGuest={handleGuestLogin}
+          onGoogle={() => {
+            if (typeof window !== "undefined") {
+              setLoading(true);
+              // Clear any existing auth data
+              sessionStorage.removeItem("token");
+              localStorage.removeItem("user_email");
+              localStorage.removeItem("user_credits");
+              
+              // Redirect to Google OAuth
+              window.location.href = `${BACKEND_URL}/auth/google`;
+            }
+          }}
+          onGuest={async () => {
+            try {
+              setLoading(true);
+              // Generate unique guest email with timestamp and random string
+              const timestamp = Date.now();
+              const randomString = Math.random().toString(36).substring(2, 8);
+              const guestEmail = `guest_${timestamp}_${randomString}@guest.kugy.ai`;
+
+              const response = await fetch(`${BACKEND_URL}/api/guest-login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: guestEmail }),
+              });
+              
+              const data = await response.json();
+              if (response.ok && data.token) {
+                sessionStorage.setItem("token", data.token);
+                localStorage.setItem("user_email", guestEmail);
+                localStorage.setItem("user_credits", "25");
+                router.push(`/menu?email=${encodeURIComponent(guestEmail)}&credits=25`);
+              } else {
+                throw new Error(data.error || "Failed to login as guest");
+              }
+            } catch (error) {
+              console.error("Guest login error:", error);
+              setError("Failed to login as guest");
+              
+              // Fallback untuk development
+              if (process.env.NODE_ENV === 'development') {
+                const timestamp = Date.now();
+                const randomString = Math.random().toString(36).substring(2, 8);
+                const fallbackEmail = `guest_${timestamp}_${randomString}@guest.kugy.ai`;
+                const dummyToken = "guest-token-" + Math.random().toString(36).substring(7);
+                
+                sessionStorage.setItem("token", dummyToken);
+                localStorage.setItem("user_email", fallbackEmail);
+                localStorage.setItem("user_credits", "25");
+                router.push(`/menu?email=${encodeURIComponent(fallbackEmail)}&credits=25`);
+              }
+            } finally {
+              setLoading(false);
+            }
+          }}
           loading={loading}
           error={error}
           bgStyle={darkMode ? darkBg : animeBg}

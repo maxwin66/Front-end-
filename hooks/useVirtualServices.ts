@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 const BACKEND_URL = "https://backend-cb98.onrender.com";
 
-interface VirtualService {
+export interface VirtualService {
   id: string;
   application: string;
   country: string;

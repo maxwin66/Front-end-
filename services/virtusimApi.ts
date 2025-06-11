@@ -1,34 +1,92 @@
-class VirtuSimAPI {
-  private readonly apiUrl = '/api/virtusim/services';
+import { VirtualService, VirtualNumber, PurchaseResponse, ServiceListResponse } from '../types/virtualSim';
 
-  async getServices() {
-    try {
-      const response = await fetch(this.apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log('Service data:', data);
-      
-      return data;
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://backend-cb98.onrender.com";
 
-    } catch (error) {
-      console.error('Service fetch error:', error);
-      return {
-        status: false,
-        data: [],
-        timestamp: '2025-06-10 23:47:44',
-        user: 'lillysummer9794'
-      };
+export class VirtualSimService {
+  private async fetchWithAuth(endpoint: string, options: RequestInit = {}) {
+    const token = sessionStorage.getItem('token');
+    const email = localStorage.getItem('user_email');
+
+    if (!token || !email) {
+      throw new Error('Authentication required');
     }
+
+    const response = await fetch(`${BACKEND_URL}${endpoint}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Network error');
+    }
+
+    return response.json();
+  }
+
+  async getServices(country: string): Promise<ServiceListResponse> {
+    const response = await this.fetchWithAuth(`/api/virtusim/services?country=${encodeURIComponent(country)}`);
+    return {
+      ...response,
+      timestamp: "2025-06-11 19:11:15",
+      user: "lillysummer9794"
+    };
+  }
+
+  async getActiveNumbers(): Promise<{ 
+    status: string; 
+    data: VirtualNumber[];
+    timestamp: string;
+    user: string;
+  }> {
+    const response = await this.fetchWithAuth('/api/virtusim/numbers');
+    return {
+      ...response,
+      timestamp: "2025-06-11 19:11:15",
+      user: "lillysummer9794"
+    };
+  }
+
+  async purchaseNumber(serviceId: string): Promise<PurchaseResponse> {
+    const response = await this.fetchWithAuth('/api/virtusim/purchase', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        service_id: serviceId,
+        timestamp: "2025-06-11 19:11:15",
+        user: "lillysummer9794"
+      }),
+    });
+    return {
+      ...response,
+      timestamp: "2025-06-11 19:11:15",
+      user: "lillysummer9794"
+    };
+  }
+
+  async checkSMS(numberId: string): Promise<{
+    status: string;
+    data: {
+      messages: Array<{
+        id: string;
+        text: string;
+        sender: string;
+        received_at: string;
+      }>;
+    };
+    timestamp: string;
+    user: string;
+  }> {
+    const response = await this.fetchWithAuth(`/api/virtusim/sms/${numberId}`);
+    return {
+      ...response,
+      timestamp: "2025-06-11 19:11:15",
+      user: "lillysummer9794"
+    };
   }
 }
 
-export const virtuSimAPI = new VirtuSimAPI();
+export const virtualSimService = new VirtualSimService();

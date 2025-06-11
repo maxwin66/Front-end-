@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const TIMESTAMP = '2025-06-11 22:12:30';
+const TIMESTAMP = '2025-06-11 22:26:05';
 const USER = 'lillysummer9794';
 
 // Simple rate limiting implementation
@@ -37,7 +37,6 @@ function checkRateLimit(ip: string): boolean {
 // Clean up expired rate limit entries every hour
 setInterval(() => {
   const now = Date.now();
-  // Using Array.from instead of for...of
   Array.from(ipRequests.keys()).forEach(ip => {
     const data = ipRequests.get(ip);
     if (data && now - data.timestamp > RATE_LIMIT_DURATION) {
@@ -50,19 +49,21 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // Set CORS headers for all responses
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins for now
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Authorization');
+  res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+
+  // Handle OPTIONS request first
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   try {
-    // CORS headers
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://front-end-bpup.vercel.app');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-    // Handle preflight request
-    if (req.method === 'OPTIONS') {
-      return res.status(200).end();
-    }
-
-    // Only allow GET requests
+    // Only allow GET requests for API calls
     if (req.method !== 'GET') {
       return res.status(405).json({
         status: false,
@@ -73,7 +74,10 @@ export default async function handler(
     }
 
     // Check rate limit
-    const clientIp = req.headers['x-forwarded-for'] as string || 'unknown';
+    const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || 
+                    req.socket.remoteAddress || 
+                    'unknown';
+                    
     if (!checkRateLimit(clientIp)) {
       return res.status(429).json({
         status: false,
@@ -101,7 +105,7 @@ export default async function handler(
     // Check cache first
     const cachedResponse = cache.get(cacheKey);
     if (cachedResponse) {
-      console.log('Returning cached response');
+      console.log('Returning cached response for IP:', clientIp);
       return res.status(200).json({
         ...cachedResponse,
         timestamp: TIMESTAMP,
@@ -116,6 +120,8 @@ export default async function handler(
     // Make request to Virtusim API with timeout
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
+
+    console.log('Making request to Virtusim API for IP:', clientIp);
 
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -135,7 +141,8 @@ export default async function handler(
         status: response.status,
         statusText: response.statusText,
         url: apiUrl,
-        timestamp: TIMESTAMP
+        timestamp: TIMESTAMP,
+        clientIp
       });
 
       throw new Error(`API returned ${response.status} ${response.statusText}`);
@@ -151,6 +158,8 @@ export default async function handler(
     // Cache the successful response
     cache.set(cacheKey, data);
     setTimeout(() => cache.delete(cacheKey), CACHE_DURATION);
+
+    console.log('Successful API response for IP:', clientIp);
 
     // Send response
     res.status(200).json({
@@ -179,7 +188,7 @@ export default async function handler(
 // Configure API route options
 export const config = {
   api: {
-    bodyParser: false, // Disable body parser
+    bodyParser: true, // Enable body parser for better error handling
     externalResolver: true // Use external resolver
   }
 };

@@ -49,6 +49,14 @@ const HomeSelect: React.FC<Props> = ({ onGoogle, onGuest, loading, error, bgStyl
            'Daftar dengan Google';
   };
 
+  const getCreditsText = (type: 'google' | 'guest') => {
+    const credits = type === 'google' ? '75' : '25';
+    const creditsText = currentLang.code === 'jp' ? 'クレジット' :
+                       currentLang.code === 'en' ? 'Credits' :
+                       'Kredit';
+    return `${credits} ${creditsText}`;
+  };
+
   return (
     <div 
       className="min-h-screen w-full"
@@ -156,7 +164,7 @@ const HomeSelect: React.FC<Props> = ({ onGoogle, onGuest, loading, error, bgStyl
           <button
             onClick={onGuest}
             disabled={loading}
-            className="w-full py-3 rounded-lg font-medium border-2 border-[#4785FF] text-[#4785FF] hover:bg-blue-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 rounded-lg font-medium border-2 border-gray-400 text-gray-600 hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 
               (currentLang.code === 'jp' ? '読み込み中...' :
@@ -168,31 +176,23 @@ const HomeSelect: React.FC<Props> = ({ onGoogle, onGuest, loading, error, bgStyl
           </button>
 
           {/* Credits Info */}
-          <div className="mt-6 flex flex-col items-center gap-1">
-            <div className="flex items-center gap-1 text-xs">
-              <span className="flex items-center justify-center w-4 h-4 rounded-full bg-[#4785FF] text-white font-bold">G</span>
-              <span>
-                {currentLang.code === 'jp' ? 'Googleログイン: ' :
-                 currentLang.code === 'en' ? 'Google Login: ' :
-                 'Login Google: '}
-                <span className="font-semibold">75 
-                  {currentLang.code === 'jp' ? 'クレジット' :
-                   currentLang.code === 'en' ? 'Credits' :
-                   'Kredit'}
-                </span>
+          <div className="mt-6 flex flex-col items-center gap-2 p-4 rounded-lg bg-gray-50 dark:bg-gray-700/30 w-full">
+            <div className="flex items-center gap-2 text-sm w-full">
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#4785FF] text-white font-bold text-xs">G</span>
+              <span className={theme === "dark" ? "text-gray-200" : "text-gray-600"}>
+                {currentLang.code === 'jp' ? 'Googleログイン' :
+                 currentLang.code === 'en' ? 'Google Login' :
+                 'Login Google'}
+                <span className="font-semibold ml-1">{getCreditsText('google')}</span>
               </span>
             </div>
-            <div className="flex items-center gap-1 text-xs">
-              <span className="flex items-center justify-center w-4 h-4 rounded-full bg-[#4785FF] text-white font-bold">T</span>
-              <span>
-                {currentLang.code === 'jp' ? 'ゲストモード: ' :
-                 currentLang.code === 'en' ? 'Guest Mode: ' :
-                 'Mode Tamu: '}
-                <span className="font-semibold">25 
-                  {currentLang.code === 'jp' ? 'クレジット' :
-                   currentLang.code === 'en' ? 'Credits' :
-                   'Kredit'}
-                </span>
+            <div className="flex items-center gap-2 text-sm w-full">
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-gray-400 text-white font-bold text-xs">T</span>
+              <span className={theme === "dark" ? "text-gray-200" : "text-gray-600"}>
+                {currentLang.code === 'jp' ? 'ゲストモード' :
+                 currentLang.code === 'en' ? 'Guest Mode' :
+                 'Mode Tamu'}
+                <span className="font-semibold ml-1">{getCreditsText('guest')}</span>
               </span>
             </div>
           </div>

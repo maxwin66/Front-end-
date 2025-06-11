@@ -1,10 +1,9 @@
 import { VirtualService, VirtualNumber, VirtualSMSMessage } from '../types/virtualSim';
 
 // Constants
-const TIMESTAMP = '2025-06-11 21:01:44';
+const TIMESTAMP = '2025-06-11 21:22:23';
 const USER = 'lillysummer9794';
 
-// Define response type once
 export interface VirtuSimResponse<T> {
   status: boolean;
   data?: T;
@@ -16,12 +15,23 @@ export interface VirtuSimResponse<T> {
 class VirtualSimService {
   private readonly baseUrl = 'https://virtusim.com/api/v2/json.php';
   private readonly apiKey = process.env.NEXT_PUBLIC_VIRTUSIM_API_KEY;
+  private readonly timeout = 15000; // 15 detik timeout
+  private readonly retryAttempts = 3;
+  private readonly retryDelay = 1000; // 1 detik
 
-  private async makeRequest<T>(action: string, params: Record<string, string> = {}): Promise<VirtuSimResponse<T>> {
+  private async makeRequest<T>(
+    action: string, 
+    params: Record<string, string> = {}, 
+    attempt: number = 1
+  ): Promise<VirtuSimResponse<T>> {
     try {
       if (!this.apiKey) {
         throw new Error('API key not configured');
       }
+
+      // Tambahkan timeout dan retry logic
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
       const queryParams = new URLSearchParams({
         api_key: this.apiKey,
@@ -34,11 +44,15 @@ class VirtualSimService {
         headers: {
           'Content-Type': 'application/json',
           'User-Agent': 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)'
-        }
+        },
+        signal: controller.signal,
+        credentials: 'include' // Include cookies if needed
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
+        throw new Error(`Network error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -49,7 +63,38 @@ class VirtualSimService {
         user: USER
       };
     } catch (error) {
-      console.error('API Request Error:', error);
+      console.error(`API Request Error (Attempt ${attempt}):`, error);
+
+      // Retry logic for specific errors
+      if (attempt < this.retryAttempts && (
+        error instanceof TypeError || 
+        error.name === 'AbortError' ||
+        (error instanceof Error && error.message.includes('Network error'))
+      )) {
+        console.log(`Retrying request (Attempt ${attempt + 1})...`);
+        await new Promise(resolve => setTimeout(resolve, this.retryDelay * attempt));
+        return this.makeRequest<T>(action, params, attempt + 1);
+      }
+
+      // Handle specific error types
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        return {
+          status: false,
+          error: 'Network connection error. Please check your internet connection and try again.',
+          timestamp: TIMESTAMP,
+          user: USER
+        };
+      }
+
+      if (error.name === 'AbortError') {
+        return {
+          status: false,
+          error: 'Request timed out. Please try again.',
+          timestamp: TIMESTAMP,
+          user: USER
+        };
+      }
+
       return {
         status: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -73,10 +118,7 @@ class VirtualSimService {
         country: country.toLowerCase(),
         country_code: country.toUpperCase().slice(0, 2),
         price: parseFloat(service.price) || 0,
-        price_formatted: new Intl.NumberFormat('id-ID', {
-          style: 'currency',
-          currency: 'IDR'
-        }).format(parseFloat(service.price) || 0),
+        price_formatted: this.formatPrice(service.price),
         available_numbers: parseInt(service.available) || 0,
         status: service.status?.toLowerCase() === 'available' ? 'available' : 'unavailable',
         duration: service.duration || '30 minutes',

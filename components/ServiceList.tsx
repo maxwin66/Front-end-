@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { virtuSimAPI, Service, VirtuSimResponse } from '../services/virtualSimService';
+import { virtualSimService, Service, VirtuSimResponse } from '../services/virtualSimService';
 
 interface ServiceListProps {
   country?: string;
@@ -19,7 +19,7 @@ export const ServiceList: React.FC<ServiceListProps> = ({
       try {
         setLoading(true);
         setError(null);
-        const response = await virtuSimAPI.getServices(country);
+        const response = await virtualSimService.getServices(country);
         
         if (response.status && response.data) {
           setServices(response.data);
@@ -107,3 +107,5 @@ export const ServiceList: React.FC<ServiceListProps> = ({
     </div>
   );
 };
+
+export default ServiceList;

@@ -1,178 +1,151 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { VIRTUSIM_API } from '../../config/api';
+import rateLimit from 'express-rate-limit';
+import cors from 'cors';
 
-// Constants
-const CURRENT_TIMESTAMP = '2025-06-11 19:56:55';
-const CURRENT_USER = 'lillysummer9794';
+const TIMESTAMP = '2025-06-11 22:04:18';
+const USER = 'lillysummer9794';
 
-interface VirtuSimResponse {
-  status: boolean;
-  data?: any;
-  error?: string;
-  timestamp: string;
-  user: string;
-}
+// Rate limiting setup
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
 
-async function makeVirtuSimRequest(action: string, params: Record<string, string> = {}) {
-  const apiKey = process.env.NEXT_PUBLIC_VIRTUSIM_API_KEY;
-    
-  if (!apiKey) {
-    throw new Error('API key not configured');
-  }
-
-  const queryParams = new URLSearchParams({
-    api_key: apiKey,
-    action,
-    ...params
+// Middleware wrapper
+const applyMiddleware = (middleware: any) => (request: NextApiRequest, response: NextApiResponse) =>
+  new Promise((resolve, reject) => {
+    middleware(request, response, (result: any) => {
+      if (result instanceof Error) {
+        return reject(result);
+      }
+      return resolve(result);
+    });
   });
 
-  const response = await fetch(VIRTUSIM_API.BASE_URL, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'User-Agent': 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)'
-    }
-  });
+// Configure CORS
+const corsMiddleware = cors({
+  origin: process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://front-end-bpup.vercel.app',
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+});
 
-  if (!response.ok) {
-    throw new Error(`VirtuSim API error: ${response.statusText}`);
-  }
+// Cache configuration
+const CACHE_DURATION = 60 * 1000; // 1 minute
+const cache = new Map();
 
-  const data = await response.json();
-  return {
-    ...data,
-    timestamp: CURRENT_TIMESTAMP,
-    user: CURRENT_USER
-  };
-}
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse<VirtuSimResponse>) {
-  const { method, query } = req;
-
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   try {
-    // GET /api/virtusim/services
-    if (method === 'GET' && query.action === 'services') {
-      const country = (query.country as string)?.toLowerCase() || 'indonesia';
-      const service = query.service as string || 'wa';
-      
-      const data = await makeVirtuSimRequest('services', { 
-        country,
-        service 
-      });
-      
-      return res.status(200).json({
-        status: true,
-        data: Array.isArray(data.data) ? data.data.map((service: any) => ({
-          service_id: service.id,
-          name: service.name,
-          description: service.description || '',
-          country: country,
-          country_code: country.toUpperCase().slice(0, 2),
-          price: parseFloat(service.price),
-          price_formatted: new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR'
-          }).format(parseFloat(service.price)),
-          available_numbers: service.available || 0,
-          status: service.status?.toLowerCase() || 'unavailable',
-          duration: service.duration || '30 minutes',
-          category: service.category || 'standard',
-          is_premium: parseFloat(service.price) > 10000
-        })) : [],
-        timestamp: CURRENT_TIMESTAMP,
-        user: CURRENT_USER
+    // Apply middlewares
+    await applyMiddleware(corsMiddleware)(req, res);
+    await applyMiddleware(limiter)(req, res);
+
+    // Only allow GET requests
+    if (req.method !== 'GET') {
+      return res.status(405).json({
+        status: false,
+        error: 'Method not allowed',
+        timestamp: TIMESTAMP,
+        user: USER
       });
     }
 
-    // GET /api/virtusim/purchase
-    if (method === 'GET' && query.action === 'purchase') {
-      const { service_id, current_credits } = query;
-      if (!service_id) {
-        throw new Error('Service ID is required');
-      }
-
-      const data = await makeVirtuSimRequest('purchase', { 
-        id: service_id as string
-      });
-
-      const credits_left = parseInt(current_credits as string) - (data.price || 0);
-
-      return res.status(200).json({
-        status: true,
-        data: {
-          order_id: data.id || '',
-          phone_number: data.phone_number || '',
-          credits_left,
-          activation_time: CURRENT_TIMESTAMP,
-          expiry_time: new Date(Date.now() + 30 * 60000).toISOString()
-        },
-        timestamp: CURRENT_TIMESTAMP,
-        user: CURRENT_USER
+    const { query } = req;
+    
+    // Validate required parameters
+    if (!query.api_key || !query.action) {
+      return res.status(400).json({
+        status: false,
+        error: 'Missing required parameters',
+        timestamp: TIMESTAMP,
+        user: USER
       });
     }
 
-    // GET /api/virtusim/numbers
-    if (method === 'GET' && query.action === 'numbers') {
-      const data = await makeVirtuSimRequest('numbers');
-      
+    // Create cache key from query parameters
+    const cacheKey = JSON.stringify(query);
+    
+    // Check cache first
+    const cachedResponse = cache.get(cacheKey);
+    if (cachedResponse) {
+      console.log('Returning cached response');
       return res.status(200).json({
-        status: true,
-        data: Array.isArray(data.data) ? data.data.map((number: any) => ({
-          id: number.id,
-          phone_number: number.number,
-          country_code: number.country || 'ID',
-          status: number.status?.toLowerCase() || 'expired',
-          activation_date: number.activated_at || CURRENT_TIMESTAMP,
-          expiry_date: number.expires_at || new Date(Date.now() + 30 * 60000).toISOString(),
-          sms_received: number.messages_count || 0,
-          service_name: number.service_name || 'WhatsApp'
-        })) : [],
-        timestamp: CURRENT_TIMESTAMP,
-        user: CURRENT_USER
+        ...cachedResponse,
+        timestamp: TIMESTAMP,
+        user: USER,
+        cached: true
       });
     }
 
-    // GET /api/virtusim/sms
-    if (method === 'GET' && query.action === 'sms') {
-      const numberId = query.number_id;
-      if (!numberId) {
-        throw new Error('Number ID is required');
-      }
+    // Construct API URL
+    const apiUrl = `https://virtusim.com/api/v2/json.php?${new URLSearchParams(query as any).toString()}`;
 
-      const data = await makeVirtuSimRequest('sms', { 
-        id: numberId as string 
-      });
-      
-      return res.status(200).json({
-        status: true,
-        data: {
-          messages: Array.isArray(data.messages) ? data.messages.map((msg: any) => ({
-            id: msg.id || '',
-            text: msg.text || '',
-            sender: msg.sender || 'Unknown',
-            received_at: msg.received_at || CURRENT_TIMESTAMP
-          })) : []
-        },
-        timestamp: CURRENT_TIMESTAMP,
-        user: CURRENT_USER
-      });
-    }
-
-    // Handle unsupported methods/actions
-    return res.status(400).json({
-      status: false,
-      error: 'Invalid request method or action',
-      timestamp: CURRENT_TIMESTAMP,
-      user: CURRENT_USER
+    // Make request to Virtusim API
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)',
+        'Authorization': `Bearer ${process.env.VIRTUSIM_SERVER_API_KEY}`
+      },
+      timeout: 10000 // 10 seconds timeout
     });
 
-  } catch (error: any) {
-    console.error('API Error:', error);
-    return res.status(500).json({
+    if (!response.ok) {
+      // Log error details
+      console.error('API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        url: apiUrl,
+        timestamp: TIMESTAMP
+      });
+
+      throw new Error(`API returned ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // Validate response structure
+    if (typeof data !== 'object' || data === null) {
+      throw new Error('Invalid response format from API');
+    }
+
+    // Cache the successful response
+    cache.set(cacheKey, data);
+    setTimeout(() => cache.delete(cacheKey), CACHE_DURATION);
+
+    // Send response
+    res.status(200).json({
+      ...data,
+      timestamp: TIMESTAMP,
+      user: USER
+    });
+
+  } catch (error) {
+    // Log error for debugging
+    console.error('Proxy Error:', error);
+
+    // Clear cache on error
+    cache.clear();
+
+    // Send error response
+    res.status(500).json({ 
       status: false,
-      error: error.message || 'Internal server error',
-      timestamp: CURRENT_TIMESTAMP,
-      user: CURRENT_USER
+      error: error instanceof Error ? error.message : 'Internal server error',
+      timestamp: TIMESTAMP,
+      user: USER
     });
   }
-        }
+}
+
+// Configure API route options
+export const config = {
+  api: {
+    bodyParser: false, // Disable body parser
+    externalResolver: true // Use external resolver
+  }
+};

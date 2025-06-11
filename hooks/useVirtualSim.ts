@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { virtualSimService } from '../services/virtualSimService';
-import { VirtualService, VirtualNumber, VirtualSimState } from '../types/virtualSim';
+import { VirtualService, VirtualNumber, VirtualSimState, VirtualSMSMessage } from '../types/virtualSim';
 
-const TIMESTAMP = '2025-06-11 20:15:32';
+const TIMESTAMP = '2025-06-11 20:25:54';
 const USER = 'lillysummer9794';
 
 export const useVirtualSim = (initialCountry = 'indonesia') => {
@@ -47,7 +47,10 @@ export const useVirtualSim = (initialCountry = 'indonesia') => {
     try {
       const response = await virtualSimService.getActiveNumbers();
       if (response.status && response.data) {
-        setState(prev => ({ ...prev, activeNumbers: response.data }));
+        setState(prev => ({ 
+          ...prev, 
+          activeNumbers: response.data 
+        }));
       }
     } catch (error) {
       console.error('Failed to load active numbers:', error);
@@ -77,7 +80,7 @@ export const useVirtualSim = (initialCountry = 'indonesia') => {
     }
   };
 
-  const checkNumberSMS = async (numberId: string) => {
+  const checkNumberSMS = async (numberId: string): Promise<VirtualSMSMessage[]> => {
     try {
       const response = await virtualSimService.checkSMS(numberId);
       return response.data?.messages || [];

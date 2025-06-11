@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const TIMESTAMP = '2025-06-11 22:09:04';
+const TIMESTAMP = '2025-06-11 22:12:30';
 const USER = 'lillysummer9794';
 
 // Simple rate limiting implementation
@@ -37,11 +37,13 @@ function checkRateLimit(ip: string): boolean {
 // Clean up expired rate limit entries every hour
 setInterval(() => {
   const now = Date.now();
-  for (const [ip, data] of ipRequests.entries()) {
-    if (now - data.timestamp > RATE_LIMIT_DURATION) {
+  // Using Array.from instead of for...of
+  Array.from(ipRequests.keys()).forEach(ip => {
+    const data = ipRequests.get(ip);
+    if (data && now - data.timestamp > RATE_LIMIT_DURATION) {
       ipRequests.delete(ip);
     }
-  }
+  });
 }, 60 * 60 * 1000);
 
 export default async function handler(

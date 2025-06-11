@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
-import { virtualSimService, Service, VirtuSimResponse } from '../services/virtualSimService';
+import { virtualSimService, VirtuSimResponse } from '../services/virtualSimService';
+import { VirtualService } from '../types/virtualSim';
 
 interface ServiceListProps {
   country?: string;
-  onServiceSelect?: (service: Service) => void;
+  onServiceSelect?: (service: VirtualService) => void;
 }
 
 export const ServiceList: React.FC<ServiceListProps> = ({ 
   country = 'indonesia',
   onServiceSelect 
 }) => {
-  const [services, setServices] = useState<Service[]>([]);
+  const [services, setServices] = useState<VirtualService[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,27 +66,37 @@ export const ServiceList: React.FC<ServiceListProps> = ({
       {services.map((service) => (
         <div
           key={service.service_id}
-          className="bg-white overflow-hidden shadow rounded-lg divide-y divide-gray-200 hover:shadow-lg transition-shadow duration-200"
+          className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg divide-y divide-gray-200 dark:divide-gray-700 hover:shadow-lg transition-shadow duration-200"
         >
           <div className="px-4 py-5 sm:p-6">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <h3 className="text-lg font-medium text-gray-900">{service.name}</h3>
-                <p className="mt-1 text-sm text-gray-500">{service.description}</p>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  {service.name}
+                </h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  {service.description}
+                </p>
               </div>
               <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                 service.is_premium
-                  ? 'bg-purple-100 text-purple-800'
-                  : 'bg-green-100 text-green-800'
+                  ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                  : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
               }`}>
                 {service.is_premium ? 'PREMIUM' : 'REGULAR'}
               </span>
             </div>
-            <div className="mt-4">
-              <p className="text-sm text-gray-500">Price: {service.price_formatted}</p>
-              <p className="text-sm text-gray-500">Available: {service.available_numbers}</p>
+            <div className="mt-4 space-y-2">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Price: {service.price_formatted}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Available: {service.available_numbers}
+              </p>
               {service.duration && (
-                <p className="text-sm text-gray-500">Duration: {service.duration}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Duration: {service.duration}
+                </p>
               )}
             </div>
           </div>
@@ -93,11 +104,11 @@ export const ServiceList: React.FC<ServiceListProps> = ({
             <button
               onClick={() => onServiceSelect?.(service)}
               disabled={service.status === 'unavailable'}
-              className={`w-full inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                service.status === 'unavailable'
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700'
-              }`}
+              className={`w-full inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white
+                ${service.status === 'unavailable'
+                  ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
+                } transition-colors duration-200`}
             >
               {service.status === 'unavailable' ? 'Unavailable' : 'Select Service'}
             </button>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { virtualSimService } from '../services/virtualSimService';
 import { VirtualService, VirtualNumber, VirtualSimState } from '../types/virtualSim';
+import { getCurrentTimestamp, getCurrentUser } from '../utils/dateUtils';
 
 export const useVirtualSim = (initialCountry = 'ID') => {
   const router = useRouter();
@@ -57,7 +58,7 @@ export const useVirtualSim = (initialCountry = 'ID') => {
       const response = await virtualSimService.purchaseNumber(service.service_id);
       
       if (response.status === 'success' && response.data) {
-        await loadActiveNumbers(); // Refresh active numbers
+        await loadActiveNumbers();
         if (response.data.credits_left) {
           localStorage.setItem('user_credits', String(response.data.credits_left));
         }

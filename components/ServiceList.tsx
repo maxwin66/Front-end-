@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { virtuSimAPI } from '../services/virtusimApi';
+import { virtuSimAPI } from '../services/virtualSimService';
 
 interface Service {
   service_id: string;

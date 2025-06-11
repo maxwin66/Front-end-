@@ -1,5 +1,5 @@
 // Constants
-const TIMESTAMP = '2025-06-11 20:07:55';
+const TIMESTAMP = '2025-06-11 20:15:32';
 const USER = 'lillysummer9794';
 
 export interface Service {
@@ -25,7 +25,7 @@ export interface VirtuSimResponse<T> {
   user: string;
 }
 
-class VirtuSimAPI {
+class VirtualSimService {
   private readonly baseUrl = 'https://virtusim.com/api/v2/json.php';
   private readonly apiKey = process.env.NEXT_PUBLIC_VIRTUSIM_API_KEY;
 
@@ -103,5 +103,5 @@ class VirtuSimAPI {
   }
 }
 
-// Export instance
-export const virtuSimAPI = new VirtuSimAPI();
+// Export instance dengan nama yang benar
+export const virtualSimService = new VirtualSimService();

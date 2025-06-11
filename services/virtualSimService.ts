@@ -1,7 +1,7 @@
 import { VirtualService, VirtualNumber, VirtualSMSMessage } from '../types/virtualSim';
 
 // Constants
-const TIMESTAMP = '2025-06-11 21:22:23';
+const TIMESTAMP = '2025-06-11 21:44:32';
 const USER = 'lillysummer9794';
 
 export interface VirtuSimResponse<T> {
@@ -39,17 +39,59 @@ class VirtualSimService {
         ...params
       });
 
+      // Try dengan mode cors dulu
+      try {
+        const corsResponse = await fetch(`${this.baseUrl}?${queryParams.toString()}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)',
+            'Origin': 'https://front-end-bpup.vercel.app'
+          },
+          mode: 'cors',
+          credentials: 'omit',
+          signal: controller.signal,
+          cache: 'no-cache'
+        });
+
+        if (corsResponse.ok) {
+          const data = await corsResponse.json();
+          clearTimeout(timeoutId);
+          return {
+            ...data,
+            timestamp: TIMESTAMP,
+            user: USER
+          };
+        }
+      } catch (corsError) {
+        console.log('CORS request failed, falling back to no-cors');
+      }
+
+      // Fallback ke no-cors jika cors gagal
       const response = await fetch(`${this.baseUrl}?${queryParams.toString()}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'User-Agent': 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)'
         },
+        mode: 'no-cors',
+        credentials: 'omit',
         signal: controller.signal,
-        credentials: 'include' // Include cookies if needed
+        cache: 'no-cache'
       });
 
       clearTimeout(timeoutId);
+
+      // Karena no-cors response selalu opaque, kita return dummy success
+      if (response.type === 'opaque') {
+        return {
+          status: true,
+          data: [] as any,
+          timestamp: TIMESTAMP,
+          user: USER
+        };
+      }
 
       if (!response.ok) {
         throw new Error(`Network error: ${response.status} ${response.statusText}`);

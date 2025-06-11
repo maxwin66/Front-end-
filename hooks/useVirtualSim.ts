@@ -1,10 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { virtualSimService } from '../services/virtualSimService';
-import { VirtualService, VirtualNumber, VirtualSimState, VirtualSMSMessage } from '../types/virtualSim';
+import { VirtualService, VirtualNumber, VirtualSimState } from '../types/virtualSim';
 
-const TIMESTAMP = '2025-06-11 20:25:54';
+const TIMESTAMP = '2025-06-11 20:54:48';
 const USER = 'lillysummer9794';
+
+interface PurchaseResponse {
+  status: boolean;
+  data?: {
+    order_id: string;
+    phone_number: string;
+    credits_left: number;
+    activation_time: string;
+    expiry_time: string;
+  };
+  error?: string;
+  timestamp: string;
+  user: string;
+}
 
 export const useVirtualSim = (initialCountry = 'indonesia') => {
   const router = useRouter();
@@ -47,46 +61,39 @@ export const useVirtualSim = (initialCountry = 'indonesia') => {
     try {
       const response = await virtualSimService.getActiveNumbers();
       if (response.status && response.data) {
-        setState(prev => ({ 
-          ...prev, 
-          activeNumbers: response.data 
-        }));
+        setState(prev => ({ ...prev, activeNumbers: response.data }));
       }
     } catch (error) {
       console.error('Failed to load active numbers:', error);
     }
   };
 
-  const purchaseNumber = async (service: VirtualService) => {
+  const purchaseNumber = async (service: VirtualService): Promise<PurchaseResponse> => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
       const response = await virtualSimService.purchaseNumber(service.service_id);
       
       if (response.status && response.data) {
         await loadActiveNumbers();
-        return response.data;
+        return response;
       } else {
         throw new Error(response.error || 'Purchase failed');
       }
     } catch (error) {
+      const errorResponse: PurchaseResponse = {
+        status: false,
+        error: error instanceof Error ? error.message : 'Purchase failed',
+        timestamp: TIMESTAMP,
+        user: USER
+      };
       setState(prev => ({
         ...prev,
-        error: error instanceof Error ? error.message : 'Purchase failed',
+        error: errorResponse.error,
         loading: false
       }));
-      throw error;
+      return errorResponse;
     } finally {
       setState(prev => ({ ...prev, loading: false }));
-    }
-  };
-
-  const checkNumberSMS = async (numberId: string): Promise<VirtualSMSMessage[]> => {
-    try {
-      const response = await virtualSimService.checkSMS(numberId);
-      return response.data?.messages || [];
-    } catch (error) {
-      console.error('Failed to check SMS:', error);
-      return [];
     }
   };
 
@@ -96,7 +103,6 @@ export const useVirtualSim = (initialCountry = 'indonesia') => {
     setSelectedCountry,
     refreshServices: loadServices,
     loadActiveNumbers,
-    purchaseNumber,
-    checkNumberSMS
+    purchaseNumber
   };
 };

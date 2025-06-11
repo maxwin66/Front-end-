@@ -5,7 +5,7 @@ import { ServiceList } from '../components/ServiceList';
 import { useVirtualSim } from '../hooks/useVirtualSim';
 import { VirtualService } from '../types/virtualSim';
 
-const TIMESTAMP = '2025-06-11 20:54:48';
+const TIMESTAMP = '2025-06-11 21:22:23';
 const USER = 'lillysummer9794';
 const DEFAULT_CREDITS = 100000;
 
@@ -71,14 +71,29 @@ export default function VirtualSimsPage() {
   if (error) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="rounded-lg bg-red-50 p-4 dark:bg-red-900">
-          <p className="text-red-800 dark:text-red-200">
-            Error: {error}
+        <div className="mx-4 rounded-lg bg-red-50 p-6 text-center dark:bg-red-900 sm:mx-0">
+          <p className="mb-4 text-red-800 dark:text-red-200">
+            {error}
           </p>
           <button 
-            onClick={() => router.reload()}
-            className="mt-4 rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800"
+            onClick={() => {
+              router.reload();
+            }}
+            className="inline-flex items-center justify-center rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 dark:bg-red-700 dark:hover:bg-red-600"
           >
+            <svg 
+              className="mr-2 h-4 w-4" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
+              />
+            </svg>
             Retry
           </button>
         </div>
@@ -139,4 +154,4 @@ export default function VirtualSimsPage() {
       </div>
     </div>
   );
-}
+              }

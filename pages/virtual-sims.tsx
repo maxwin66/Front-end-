@@ -4,6 +4,10 @@ import { useVirtualSim } from '../hooks/useVirtualSim';
 import { VirtualService, VirtualNumber } from '../types/virtualSim';
 import { toast } from 'react-hot-toast';
 
+// Constants
+const TIMESTAMP = '2025-06-11 19:38:53';
+const USER = 'lillysummer9794';
+
 const VirtualSims = () => {
   const router = useRouter();
   const [credits, setCredits] = useState(0);
@@ -38,7 +42,7 @@ const VirtualSims = () => {
     
     checkAuth();
     loadActiveNumbers();
-  }, [router, loadActiveNumbers]);
+  }, [router, loadActiveNumbers, TIMESTAMP]);
 
   const handlePurchase = async (service: VirtualService) => {
     try {
@@ -48,9 +52,15 @@ const VirtualSims = () => {
       }
 
       const result = await purchaseNumber(service);
-      toast.success('Number purchased successfully!');
-      setCredits(result.credits_left);
-      setActiveTab('active');
+      if (result.data) {
+        toast.success('Number purchased successfully!');
+        setCredits(result.data.credits_left);
+        localStorage.setItem('user_credits', String(result.data.credits_left));
+        setActiveTab('active');
+        loadActiveNumbers(); // Refresh active numbers
+      } else {
+        throw new Error(result.message || 'Purchase failed');
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Purchase failed');
     }
@@ -59,8 +69,15 @@ const VirtualSims = () => {
   const handleCheckSMS = async (numberId: string) => {
     try {
       const messages = await checkNumberSMS(numberId);
-      // Implementasi modal/dialog untuk menampilkan pesan
-      toast.success(`${messages.length} messages found`);
+      if (messages.length > 0) {
+        toast.success(`${messages.length} messages found`, {
+          duration: 5000,
+          position: 'top-center',
+        });
+        // TODO: Implement modal for message details
+      } else {
+        toast.info('No messages found');
+      }
     } catch (error) {
       toast.error('Failed to check messages');
     }
@@ -88,9 +105,9 @@ const VirtualSims = () => {
                 onChange={(e) => setSelectedCountry(e.target.value)}
                 className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
               >
-                <option value="ID">Indonesia</option>
-                <option value="US">United States</option>
-                <option value="JP">Japan</option>
+                <option value="indonesia">Indonesia (WhatsApp)</option>
+                <option value="united-states">United States (WhatsApp)</option>
+                <option value="japan">Japan (WhatsApp)</option>
               </select>
             </div>
           </div>
@@ -165,14 +182,22 @@ const VirtualSims = () => {
                   <div className="px-4 py-4 sm:px-6">
                     <button
                       onClick={() => handlePurchase(service)}
-                      disabled={service.status === 'unavailable' || credits < service.price}
+                      disabled={service.status === 'unavailable' || credits < service.price || loading}
                       className={`w-full inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                        service.status === 'unavailable' || credits < service.price
+                        service.status === 'unavailable' || credits < service.price || loading
                           ? 'bg-gray-400 cursor-not-allowed'
                           : 'bg-blue-600 hover:bg-blue-700'
                       }`}
                     >
-                      {service.status === 'unavailable' 
+                      {loading ? (
+                        <span className="flex items-center">
+                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Processing...
+                        </span>
+                      ) : service.status === 'unavailable' 
                         ? 'Unavailable'
                         : credits < service.price
                           ? 'Insufficient Credits'

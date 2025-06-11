@@ -1,7 +1,7 @@
 import { VirtualService, VirtualNumber, VirtualSMSMessage } from '../types/virtualSim';
 
 // Constants
-const TIMESTAMP = '2025-06-11 21:44:32';
+const TIMESTAMP = '2025-06-11 21:57:05';
 const USER = 'lillysummer9794';
 
 export interface VirtuSimResponse<T> {
@@ -29,7 +29,6 @@ class VirtualSimService {
         throw new Error('API key not configured');
       }
 
-      // Tambahkan timeout dan retry logic
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
@@ -39,59 +38,18 @@ class VirtualSimService {
         ...params
       });
 
-      // Try dengan mode cors dulu
-      try {
-        const corsResponse = await fetch(`${this.baseUrl}?${queryParams.toString()}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)',
-            'Origin': 'https://front-end-bpup.vercel.app'
-          },
-          mode: 'cors',
-          credentials: 'omit',
-          signal: controller.signal,
-          cache: 'no-cache'
-        });
-
-        if (corsResponse.ok) {
-          const data = await corsResponse.json();
-          clearTimeout(timeoutId);
-          return {
-            ...data,
-            timestamp: TIMESTAMP,
-            user: USER
-          };
-        }
-      } catch (corsError) {
-        console.log('CORS request failed, falling back to no-cors');
-      }
-
-      // Fallback ke no-cors jika cors gagal
-      const response = await fetch(`${this.baseUrl}?${queryParams.toString()}`, {
+      // Gunakan proxy API route Next.js
+      const response = await fetch(`/api/virtusim?${queryParams.toString()}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/4.0 (compatible; MSIE 5.01; Windows NT 5.0)'
+          'Accept': 'application/json'
         },
-        mode: 'no-cors',
-        credentials: 'omit',
         signal: controller.signal,
         cache: 'no-cache'
       });
 
       clearTimeout(timeoutId);
-
-      // Karena no-cors response selalu opaque, kita return dummy success
-      if (response.type === 'opaque') {
-        return {
-          status: true,
-          data: [] as any,
-          timestamp: TIMESTAMP,
-          user: USER
-        };
-      }
 
       if (!response.ok) {
         throw new Error(`Network error: ${response.status} ${response.statusText}`);
@@ -104,37 +62,14 @@ class VirtualSimService {
         timestamp: TIMESTAMP,
         user: USER
       };
+
     } catch (error) {
       console.error(`API Request Error (Attempt ${attempt}):`, error);
 
-      // Retry logic for specific errors
-      if (attempt < this.retryAttempts && (
-        error instanceof TypeError || 
-        error.name === 'AbortError' ||
-        (error instanceof Error && error.message.includes('Network error'))
-      )) {
+      if (attempt < this.retryAttempts) {
         console.log(`Retrying request (Attempt ${attempt + 1})...`);
         await new Promise(resolve => setTimeout(resolve, this.retryDelay * attempt));
         return this.makeRequest<T>(action, params, attempt + 1);
-      }
-
-      // Handle specific error types
-      if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        return {
-          status: false,
-          error: 'Network connection error. Please check your internet connection and try again.',
-          timestamp: TIMESTAMP,
-          user: USER
-        };
-      }
-
-      if (error.name === 'AbortError') {
-        return {
-          status: false,
-          error: 'Request timed out. Please try again.',
-          timestamp: TIMESTAMP,
-          user: USER
-        };
       }
 
       return {

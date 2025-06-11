@@ -1,102 +1,99 @@
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import { virtualSimService } from '../services/virtualSimService';
+import { VirtualService, VirtualNumber, VirtualSimState } from '../types/virtualSim';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://backend-cb98.onrender.com";
-
-export interface VirtualService {
-  id: string;
-  application: string;
-  country: string;
-  countryCode: string;
-  type: string;
-  rate: number;
-  stock: number;
-  status: 'available' | 'unavailable';
-  description?: string;
-  duration?: string;
-  price_formatted?: string;
-}
-
-export interface ServiceResponse {
-  services: VirtualService[];
-  loading: boolean;
-  error: string | null;
-  timestamp: string;
-  user: string;
-}
-
-const useVirtualServices = (country: string): ServiceResponse => {
-  const [services, setServices] = useState<VirtualService[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [timestamp] = useState("2025-06-10 23:07:10");
-  const [user] = useState("lillysummer9794");
+export const useVirtualSim = (initialCountry = 'ID') => {
+  const router = useRouter();
+  const [state, setState] = useState<VirtualSimState>({
+    services: [],
+    activeNumbers: [],
+    loading: true,
+    error: null
+  });
+  const [selectedCountry, setSelectedCountry] = useState(initialCountry);
 
   useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        if (typeof window === 'undefined') return;
+    loadServices();
+  }, [selectedCountry]);
 
-        const email = window.localStorage.getItem('user_email');
-        const token = window.sessionStorage.getItem('token');
-
-        if (!email || !token) {
-          setError('Authentication required');
-          setLoading(false);
-          return;
-        }
-
-        const response = await fetch(
-          `${BACKEND_URL}/api/virtusim/services?country=${encodeURIComponent(country)}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            }
-          }
-        );
-
-        const data = await response.json();
-
-        if (response.ok && data.status === 'success' && Array.isArray(data.data)) {
-          const transformedServices = data.data.map((service: any) => ({
-            id: service.service_id,
-            application: service.name,
-            description: service.description,
-            country: service.country,
-            countryCode: country.slice(0, 2).toUpperCase(),
-            type: parseFloat(service.price) > 10000 ? 'PREMIUM' : 'REGULAR',
-            rate: parseFloat(service.price),
-            stock: service.available_numbers,
-            status: service.status.toLowerCase() === 'available' ? 'available' : 'unavailable',
-            duration: service.duration,
-            price_formatted: service.price_formatted
-          }));
-          
-          setServices(transformedServices);
-          setError(null);
-        } else {
-          setError(data.message || 'No services available for this country at the moment');
-          setServices([]);
-        }
-      } catch (error) {
-        console.error('Fetch error:', error);
-        setError('Network error');
-        setServices([]);
-      } finally {
-        setLoading(false);
+  const loadServices = async () => {
+    try {
+      setState(prev => ({ ...prev, loading: true, error: null }));
+      const response = await virtualSimService.getServices(selectedCountry);
+      
+      if (response.status === 'success') {
+        setState(prev => ({
+          ...prev,
+          services: response.data,
+          loading: false
+        }));
+      } else {
+        throw new Error(response.message || 'Failed to load services');
       }
-    };
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'An error occurred',
+        loading: false
+      }));
+    }
+  };
 
-    fetchServices();
-  }, [country]);
+  const loadActiveNumbers = async () => {
+    try {
+      const response = await virtualSimService.getActiveNumbers();
+      if (response.status === 'success') {
+        setState(prev => ({ ...prev, activeNumbers: response.data }));
+      }
+    } catch (error) {
+      console.error('Failed to load active numbers:', error);
+    }
+  };
 
-  return { 
-    services, 
-    loading, 
-    error,
-    timestamp,
-    user
+  const purchaseNumber = async (service: VirtualService) => {
+    try {
+      setState(prev => ({ ...prev, loading: true, error: null }));
+      const response = await virtualSimService.purchaseNumber(service.service_id);
+      
+      if (response.status === 'success' && response.data) {
+        await loadActiveNumbers(); // Refresh active numbers
+        if (response.data.credits_left) {
+          localStorage.setItem('user_credits', String(response.data.credits_left));
+        }
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Purchase failed');
+      }
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Purchase failed',
+        loading: false
+      }));
+      throw error;
+    } finally {
+      setState(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const checkNumberSMS = async (numberId: string) => {
+    try {
+      const response = await virtualSimService.checkSMS(numberId);
+      return response.data.messages;
+    } catch (error) {
+      console.error('Failed to check SMS:', error);
+      return [];
+    }
+  };
+
+  return {
+    ...state,
+    selectedCountry,
+    setSelectedCountry,
+    refreshServices: loadServices,
+    loadActiveNumbers,
+    purchaseNumber,
+    checkNumberSMS
   };
 };
-
-export default useVirtualServices;

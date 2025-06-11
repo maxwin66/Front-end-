@@ -1,9 +1,10 @@
 import { VirtualService, VirtualNumber, VirtualSMSMessage } from '../types/virtualSim';
 
 // Constants
-const TIMESTAMP = '2025-06-11 20:30:39';
+const TIMESTAMP = '2025-06-11 21:01:44';
 const USER = 'lillysummer9794';
 
+// Define response type once
 export interface VirtuSimResponse<T> {
   status: boolean;
   data?: T;
@@ -42,7 +43,6 @@ class VirtualSimService {
 
       const data = await response.json();
 
-      // Add metadata to response
       return {
         ...data,
         timestamp: TIMESTAMP,
@@ -201,8 +201,5 @@ class VirtualSimService {
   }
 }
 
-// Export single instance
+// Export instance
 export const virtualSimService = new VirtualSimService();
-
-// Export type for use in other files
-export type { VirtuSimResponse };

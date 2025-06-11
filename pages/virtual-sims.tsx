@@ -5,8 +5,7 @@ import { ServiceList } from '../components/ServiceList';
 import { useVirtualSim } from '../hooks/useVirtualSim';
 import { VirtualService } from '../types/virtualSim';
 
-// Constants
-const TIMESTAMP = '2025-06-11 20:48:03';
+const TIMESTAMP = '2025-06-11 20:54:48';
 const USER = 'lillysummer9794';
 const DEFAULT_CREDITS = 100000;
 
@@ -22,7 +21,6 @@ export default function VirtualSimsPage() {
     loadActiveNumbers 
   } = useVirtualSim();
 
-  // Load user credits from localStorage on mount
   useEffect(() => {
     const savedCredits = localStorage.getItem('user_credits');
     if (savedCredits) {
@@ -30,45 +28,33 @@ export default function VirtualSimsPage() {
     }
   }, []);
 
-  // Handle service selection and purchase
   const handleServiceSelect = async (service: VirtualService) => {
     try {
-      // Check if user has enough credits
       if (service.price > credits) {
         toast.error('Insufficient credits!');
         return;
       }
 
-      // Show loading toast
       const loadingToast = toast.loading('Purchasing number...');
 
-      // Attempt to purchase number
       const response = await purchaseNumber(service);
-      
-      // Clear loading toast
       toast.dismiss(loadingToast);
 
       if (response.status && response.data) {
-        // Success - update credits and show success message
         const newCredits = credits - service.price;
         setCredits(newCredits);
         localStorage.setItem('user_credits', String(newCredits));
 
         toast.success(`Successfully purchased number: ${response.data.phone_number}`);
-        
-        // Refresh active numbers list
         await loadActiveNumbers();
       } else {
-        // Handle API error
         throw new Error(response.error || 'Failed to purchase number');
       }
     } catch (error) {
-      // Handle any errors
       toast.error(error instanceof Error ? error.message : 'Failed to purchase number');
     }
   };
 
-  // Show loading state
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -82,7 +68,6 @@ export default function VirtualSimsPage() {
     );
   }
 
-  // Show error state
   if (error) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -104,7 +89,6 @@ export default function VirtualSimsPage() {
   return (
     <div className="min-h-screen bg-gray-100 px-4 py-8 dark:bg-gray-900">
       <div className="mx-auto max-w-7xl">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Virtual SIM Services
@@ -117,7 +101,6 @@ export default function VirtualSimsPage() {
           </p>
         </div>
 
-        {/* Active Numbers Section */}
         {activeNumbers.length > 0 && (
           <div className="mb-8">
             <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
@@ -147,7 +130,6 @@ export default function VirtualSimsPage() {
           </div>
         )}
 
-        {/* Services List */}
         <div>
           <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Available Services

@@ -1,4 +1,5 @@
 import { VirtualService, VirtualNumber, PurchaseResponse, ServiceListResponse } from '../types/virtualSim';
+import { getCurrentTimestamp, getCurrentUser } from '../utils/dateUtils';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://backend-cb98.onrender.com";
 
@@ -32,8 +33,8 @@ export class VirtualSimService {
     const response = await this.fetchWithAuth(`/api/virtusim/services?country=${encodeURIComponent(country)}`);
     return {
       ...response,
-      timestamp: "2025-06-11 19:11:15",
-      user: "lillysummer9794"
+      timestamp: getCurrentTimestamp(),
+      user: getCurrentUser()
     };
   }
 
@@ -46,24 +47,20 @@ export class VirtualSimService {
     const response = await this.fetchWithAuth('/api/virtusim/numbers');
     return {
       ...response,
-      timestamp: "2025-06-11 19:11:15",
-      user: "lillysummer9794"
+      timestamp: getCurrentTimestamp(),
+      user: getCurrentUser()
     };
   }
 
   async purchaseNumber(serviceId: string): Promise<PurchaseResponse> {
     const response = await this.fetchWithAuth('/api/virtusim/purchase', {
-      method: 'POST',
-      body: JSON.stringify({ 
-        service_id: serviceId,
-        timestamp: "2025-06-11 19:11:15",
-        user: "lillysummer9794"
-      }),
+      method: 'GET',
+      body: JSON.stringify({ service_id: serviceId }),
     });
     return {
       ...response,
-      timestamp: "2025-06-11 19:11:15",
-      user: "lillysummer9794"
+      timestamp: getCurrentTimestamp(),
+      user: getCurrentUser()
     };
   }
 
@@ -83,8 +80,8 @@ export class VirtualSimService {
     const response = await this.fetchWithAuth(`/api/virtusim/sms/${numberId}`);
     return {
       ...response,
-      timestamp: "2025-06-11 19:11:15",
-      user: "lillysummer9794"
+      timestamp: getCurrentTimestamp(),
+      user: getCurrentUser()
     };
   }
 }

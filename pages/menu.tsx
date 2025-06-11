@@ -1,26 +1,26 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useRouter } from "next/router";
 import { UiContext } from "./_app";
+import ParticlesBackground from "../components/ParticlesBackground";
 
 const BACKEND_URL = "https://backend-cb98.onrender.com";
 
+// Background styles
 const animeBg = {
-  background: "url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png') center/cover no-repeat",
-  minHeight: "100vh",
+  background: "url('https://raw.githubusercontent.com/Minatoz997/angel_background.png/main/angel_background.png') center/cover no-repeat fixed",
 };
 
 const darkBg = {
   background: "linear-gradient(135deg,#0f172a 40%,#172554 100%)",
-  minHeight: "100vh",
 };
 
-const MenuPage: React.FC = () => {
+const MenuPage = () => {
   const router = useRouter();
   const { darkMode } = useContext(UiContext);
-  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(true);
-  const [credits, setCredits] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [email, setEmail] = useState("");
+  const [credits, setCredits] = useState(0);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -30,13 +30,11 @@ const MenuPage: React.FC = () => {
         const params = new URLSearchParams(window.location.search);
         const urlEmail = params.get("email");
 
-        // Jika dapat email dari URL dan belum ada di localStorage
         if (urlEmail && !storedEmail) {
           localStorage.setItem("user_email", urlEmail);
           setEmail(urlEmail);
         }
 
-        // Improved validation for auth state
         if (!token && !storedEmail && !urlEmail) {
           console.log("No auth found, redirecting to home");
           router.push("/");
@@ -44,40 +42,34 @@ const MenuPage: React.FC = () => {
         }
 
         const emailToUse = storedEmail || urlEmail;
+        const isGuest = emailToUse?.includes('@guest.kugy.ai') || false;
         
         try {
-          // Verifikasi credits dengan backend
           const response = await fetch(
             `${BACKEND_URL}/api/credits?user_email=${encodeURIComponent(emailToUse)}`
           );
           const data = await response.json();
 
           if (response.ok) {
-            setCredits(parseInt(data.credits));
-            // Simpan credits di localStorage
-            localStorage.setItem("user_credits", data.credits);
+            const newCredits = parseInt(data.credits);
+            const finalCredits = isGuest ? Math.min(newCredits, 25) : newCredits;
+            setCredits(finalCredits);
+            localStorage.setItem("user_credits", String(finalCredits));
             setEmail(emailToUse);
           } else {
             const storedCredits = localStorage.getItem("user_credits");
-            if (storedCredits) {
-              setCredits(parseInt(storedCredits));
-            } else {
-              // Set default credits based on email type
-              const defaultCredits = emailToUse.includes("@guest.kugy.ai") ? 25 : 75;
-              setCredits(defaultCredits);
-              localStorage.setItem("user_credits", String(defaultCredits));
-            }
+            const parsedCredits = storedCredits ? parseInt(storedCredits) : (isGuest ? 25 : 75);
+            const finalCredits = isGuest ? Math.min(parsedCredits, 25) : parsedCredits;
+            setCredits(finalCredits);
+            localStorage.setItem("user_credits", String(finalCredits));
           }
         } catch (error) {
           console.error("Error fetching credits:", error);
           const storedCredits = localStorage.getItem("user_credits");
-          if (storedCredits) {
-            setCredits(parseInt(storedCredits));
-          } else {
-            const defaultCredits = emailToUse.includes("@guest.kugy.ai") ? 25 : 75;
-            setCredits(defaultCredits);
-            localStorage.setItem("user_credits", String(defaultCredits));
-          }
+          const parsedCredits = storedCredits ? parseInt(storedCredits) : (isGuest ? 25 : 75);
+          const finalCredits = isGuest ? Math.min(parsedCredits, 25) : parsedCredits;
+          setCredits(finalCredits);
+          localStorage.setItem("user_credits", String(finalCredits));
         }
 
       } catch (error) {
@@ -92,7 +84,6 @@ const MenuPage: React.FC = () => {
   }, [router]);
 
   const handleLogout = () => {
-    // Clear all auth data
     sessionStorage.removeItem("token");
     localStorage.removeItem("user_email");
     localStorage.removeItem("user_credits");
@@ -104,7 +95,8 @@ const MenuPage: React.FC = () => {
   };
 
   const handleChatClick = () => {
-    if (!credits) {
+    const isGuest = email?.includes('@guest.kugy.ai') || false;
+    if (!credits || (isGuest && credits > 25)) {
       alert("Maaf, kredit Anda habis. Silakan login dengan Google untuk mendapatkan kredit tambahan.");
       return;
     }
@@ -112,7 +104,8 @@ const MenuPage: React.FC = () => {
   };
 
   const handleGenerateImageClick = () => {
-    if (!credits || credits < 10) {
+    const isGuest = email?.includes('@guest.kugy.ai') || false;
+    if (!credits || credits < 10 || (isGuest && credits > 25)) {
       alert("Maaf, untuk membuat gambar diperlukan minimal 10 kredit.");
       return;
     }
@@ -120,7 +113,8 @@ const MenuPage: React.FC = () => {
   };
 
   const handleVirtualSimsClick = () => {
-    if (!credits || credits < 25) {
+    const isGuest = email?.includes('@guest.kugy.ai') || false;
+    if (!credits || credits < 25 || (isGuest && credits > 25)) {
       alert("Maaf, untuk membeli nomor virtual diperlukan minimal 25 kredit.");
       return;
     }
@@ -142,9 +136,9 @@ const MenuPage: React.FC = () => {
           <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
           <button 
             onClick={() => router.push("/")}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+            className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 underline"
           >
-            Kembali ke Home
+            Kembali ke Halaman Login
           </button>
         </div>
       </div>
@@ -152,14 +146,10 @@ const MenuPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center transition-colors" style={darkMode ? darkBg : animeBg}>
-      <div className="bg-white/80 dark:bg-slate-800/90 rounded-3xl shadow-2xl px-8 py-10 w-full max-w-md mx-4 flex flex-col items-center border border-blue-200 dark:border-slate-600 relative">
-        <div className="absolute -top-8 left-1/2 -translate-x-1/2">
-          <span className="bg-gradient-to-r from-blue-400 to-purple-400 text-white font-bold px-4 py-1 rounded-full shadow text-xs tracking-wider">
-            Pilih Fitur
-          </span>
-        </div>
-
+    <div className="min-h-screen w-full relative" style={darkMode ? darkBg : animeBg}>
+      <ParticlesBackground darkMode={darkMode} />
+      
+      <div className="relative z-10 container mx-auto px-4 py-8 max-w-md">
         <h1 className="text-2xl font-extrabold text-center mb-6 drop-shadow-lg tracking-wide" style={{ color: "#38bdf8", textShadow: darkMode ? "0 2px 8px #0ea5e9bb" : "0 2px 8px #0369a1cc" }}>
           Menu Utama MyKugy
         </h1>
@@ -220,7 +210,7 @@ const MenuPage: React.FC = () => {
             onClick={handleLogout}
             className="mt-4 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 underline"
           >
-            Logout
+            Keluar
           </button>
         </div>
       </div>

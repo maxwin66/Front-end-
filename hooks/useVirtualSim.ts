@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { virtualSimService } from '../services/virtualSimService';
 import { VirtualService, VirtualNumber, VirtualSimState } from '../types/virtualSim';
-import { getCurrentTimestamp, getCurrentUser } from '../utils/dateUtils';
 
-export const useVirtualSim = (initialCountry = 'ID') => {
+const TIMESTAMP = '2025-06-11 20:15:32';
+const USER = 'lillysummer9794';
+
+export const useVirtualSim = (initialCountry = 'indonesia') => {
   const router = useRouter();
   const [state, setState] = useState<VirtualSimState>({
     services: [],
@@ -23,14 +25,14 @@ export const useVirtualSim = (initialCountry = 'ID') => {
       setState(prev => ({ ...prev, loading: true, error: null }));
       const response = await virtualSimService.getServices(selectedCountry);
       
-      if (response.status === 'success') {
+      if (response.status && response.data) {
         setState(prev => ({
           ...prev,
           services: response.data,
           loading: false
         }));
       } else {
-        throw new Error(response.message || 'Failed to load services');
+        throw new Error(response.error || 'Failed to load services');
       }
     } catch (error) {
       setState(prev => ({
@@ -44,7 +46,7 @@ export const useVirtualSim = (initialCountry = 'ID') => {
   const loadActiveNumbers = async () => {
     try {
       const response = await virtualSimService.getActiveNumbers();
-      if (response.status === 'success') {
+      if (response.status && response.data) {
         setState(prev => ({ ...prev, activeNumbers: response.data }));
       }
     } catch (error) {
@@ -57,14 +59,11 @@ export const useVirtualSim = (initialCountry = 'ID') => {
       setState(prev => ({ ...prev, loading: true, error: null }));
       const response = await virtualSimService.purchaseNumber(service.service_id);
       
-      if (response.status === 'success' && response.data) {
+      if (response.status && response.data) {
         await loadActiveNumbers();
-        if (response.data.credits_left) {
-          localStorage.setItem('user_credits', String(response.data.credits_left));
-        }
         return response.data;
       } else {
-        throw new Error(response.message || 'Purchase failed');
+        throw new Error(response.error || 'Purchase failed');
       }
     } catch (error) {
       setState(prev => ({
@@ -81,7 +80,7 @@ export const useVirtualSim = (initialCountry = 'ID') => {
   const checkNumberSMS = async (numberId: string) => {
     try {
       const response = await virtualSimService.checkSMS(numberId);
-      return response.data.messages;
+      return response.data?.messages || [];
     } catch (error) {
       console.error('Failed to check SMS:', error);
       return [];

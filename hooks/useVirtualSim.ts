@@ -1,3 +1,6 @@
+const TIMESTAMP = '2025-06-11 21:57:05';
+const USER = 'lillysummer9794';
+
 import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import { virtualSimService } from '../services/virtualSimService'; // Import the corrected service
@@ -28,13 +31,13 @@ export const useVirtualSim = (initialCountry = 'indonesia') => {
   });
 
   // Fetch available services
-  const { data: servicesData, error: servicesError, isLoading: servicesLoading } = useSWR(
+  const { data: servicesData, error: servicesError, isLoading: servicesLoading } = useSWR<VirtualService[]>(
     `${API_BASE_URL}/api/virtusim/services?country=${initialCountry}&service=wa`,
     virtualSimService.fetcher // Use the fetcher from virtualSimService
   );
 
   // Fetch active numbers
-  const { data: activeNumbersData, error: activeNumbersError, isLoading: activeNumbersLoading, mutate: mutateActiveNumbers } = useSWR(
+  const { data: activeNumbersData, error: activeNumbersError, isLoading: activeNumbersLoading, mutate: mutateActiveNumbers } = useSWR<VirtualNumber[]>(
     `${API_BASE_URL}/api/virtusim/active_orders`,
     virtualSimService.fetcher // Use the fetcher from virtualSimService
   );
@@ -42,8 +45,8 @@ export const useVirtualSim = (initialCountry = 'indonesia') => {
   useEffect(() => {
     setState(prevState => ({
       ...prevState,
-      services: servicesData || [], // Corrected: fetcher now returns data directly
-      activeNumbers: activeNumbersData || [], // Corrected: fetcher now returns data directly
+      services: servicesData || [],
+      activeNumbers: activeNumbersData || [],
       loading: servicesLoading || activeNumbersLoading,
       error: servicesError?.message || activeNumbersError?.message || null,
     }));
@@ -54,12 +57,12 @@ export const useVirtualSim = (initialCountry = 'indonesia') => {
       const result = await virtualSimService.purchaseNumber(serviceId, operator);
       if (result.status) {
         mutateActiveNumbers(); // Revalidate active numbers after purchase
-        return { status: true, data: result.data };
+        return { status: true, data: result.data, timestamp: result.timestamp, user: result.user };
       } else {
         throw new Error(result.error || 'Failed to purchase number');
       }
     } catch (err: any) {
-      return { status: false, error: err.message };
+      return { status: false, error: err.message, timestamp: TIMESTAMP, user: USER };
     }
   };
 
@@ -80,4 +83,4 @@ export const useVirtualSim = (initialCountry = 'indonesia') => {
     // Add other functions here as needed
   };
 };
-    
+

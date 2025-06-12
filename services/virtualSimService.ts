@@ -206,6 +206,20 @@ class VirtualSimService {
   }
 
   // Helper methods
+  public async fetcher<T>(url: string): Promise<T> {
+    const response = await fetch(url);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'An error occurred');
+    }
+    const data = await response.json();
+    // Assuming the backend always returns a structure like { status: boolean, data: T, error?: string }
+    if (data.status === false) {
+      throw new Error(data.error || 'An error occurred on the server');
+    }
+    return data.data; // Return the actual data part for SWR
+  }
+
   private formatPrice(price: number | string): string {
     const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
     return new Intl.NumberFormat('id-ID', {
@@ -233,3 +247,4 @@ class VirtualSimService {
 // Export instance
 export const virtualSimService = new VirtualSimService();
 
+      

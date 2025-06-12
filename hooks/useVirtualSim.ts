@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import { virtualSimService } from '../services/virtualSimService';
+import useSWR from 'swr';
+import { virtualSimService } from '../services/virtualSimService'; // Import the corrected service
 import { VirtualService, VirtualNumber, VirtualSimState } from '../types/virtualSim';
 
-const TIMESTAMP = '2025-06-11 20:54:48';
-const USER = 'lillysummer9794';
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
 interface PurchaseResponse {
   status: boolean;
@@ -21,88 +20,64 @@ interface PurchaseResponse {
 }
 
 export const useVirtualSim = (initialCountry = 'indonesia') => {
-  const router = useRouter();
   const [state, setState] = useState<VirtualSimState>({
     services: [],
     activeNumbers: [],
     loading: true,
-    error: null
+    error: null,
   });
-  const [selectedCountry, setSelectedCountry] = useState(initialCountry);
+
+  // Fetch available services
+  const { data: servicesData, error: servicesError, isLoading: servicesLoading } = useSWR(
+    `${API_BASE_URL}/api/virtusim/services?country=${initialCountry}&service=wa`,
+    virtualSimService.fetcher // Use the fetcher from virtualSimService
+  );
+
+  // Fetch active numbers
+  const { data: activeNumbersData, error: activeNumbersError, isLoading: activeNumbersLoading, mutate: mutateActiveNumbers } = useSWR(
+    `${API_BASE_URL}/api/virtusim/active_orders`,
+    virtualSimService.fetcher // Use the fetcher from virtualSimService
+  );
 
   useEffect(() => {
-    loadServices();
-  }, [selectedCountry]);
+    setState(prevState => ({
+      ...prevState,
+      services: servicesData?.data || [], // Assuming backend returns data directly under 'data' key
+      activeNumbers: activeNumbersData?.data || [], // Assuming backend returns data directly under 'data' key
+      loading: servicesLoading || activeNumbersLoading,
+      error: servicesError?.message || activeNumbersError?.message || null,
+    }));
+  }, [servicesData, servicesError, servicesLoading, activeNumbersData, activeNumbersError, activeNumbersLoading]);
 
-  const loadServices = async () => {
+  const purchaseNumber = async (serviceId: string, operator: string): Promise<PurchaseResponse> => {
     try {
-      setState(prev => ({ ...prev, loading: true, error: null }));
-      const response = await virtualSimService.getServices(selectedCountry);
-      
-      if (response.status && response.data) {
-        setState(prev => ({
-          ...prev,
-          services: response.data,
-          loading: false
-        }));
+      const result = await virtualSimService.purchaseNumber(serviceId, operator);
+      if (result.status) {
+        mutateActiveNumbers(); // Revalidate active numbers after purchase
+        return { status: true, data: result.data };
       } else {
-        throw new Error(response.error || 'Failed to load services');
+        throw new Error(result.error || 'Failed to purchase number');
       }
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        error: error instanceof Error ? error.message : 'An error occurred',
-        loading: false
-      }));
+    } catch (err: any) {
+      return { status: false, error: err.message };
     }
   };
 
-  const loadActiveNumbers = async () => {
-    try {
-      const response = await virtualSimService.getActiveNumbers();
-      if (response.status && response.data) {
-        setState(prev => ({ ...prev, activeNumbers: response.data }));
-      }
-    } catch (error) {
-      console.error('Failed to load active numbers:', error);
-    }
+  const loadActiveNumbers = () => {
+    mutateActiveNumbers();
   };
 
-  const purchaseNumber = async (service: VirtualService): Promise<PurchaseResponse> => {
-    try {
-      setState(prev => ({ ...prev, loading: true, error: null }));
-      const response = await virtualSimService.purchaseNumber(service.service_id);
-      
-      if (response.status && response.data) {
-        await loadActiveNumbers();
-        return response;
-      } else {
-        throw new Error(response.error || 'Purchase failed');
-      }
-    } catch (error) {
-      const errorResponse: PurchaseResponse = {
-        status: false,
-        error: error instanceof Error ? error.message : 'Purchase failed',
-        timestamp: TIMESTAMP,
-        user: USER
-      };
-      setState(prev => ({
-        ...prev,
-        error: errorResponse.error,
-        loading: false
-      }));
-      return errorResponse;
-    } finally {
-      setState(prev => ({ ...prev, loading: false }));
-    }
-  };
+  // Implement other actions like checkOrderStatus, reactiveOrder, setOrderStatus, etc.
+  // by calling virtualSimService methods directly.
 
   return {
-    ...state,
-    selectedCountry,
-    setSelectedCountry,
-    refreshServices: loadServices,
+    services: state.services,
+    activeNumbers: state.activeNumbers,
+    loading: state.loading,
+    error: state.error,
+    purchaseNumber,
     loadActiveNumbers,
-    purchaseNumber
+    // Add other functions here as needed
   };
 };
+

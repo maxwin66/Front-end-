@@ -42,8 +42,8 @@ export const useVirtualSim = (initialCountry = 'indonesia') => {
   useEffect(() => {
     setState(prevState => ({
       ...prevState,
-      services: servicesData?.data || [], // Assuming backend returns data directly under 'data' key
-      activeNumbers: activeNumbersData?.data || [], // Assuming backend returns data directly under 'data' key
+      services: servicesData || [], // Corrected: fetcher now returns data directly
+      activeNumbers: activeNumbersData || [], // Corrected: fetcher now returns data directly
       loading: servicesLoading || activeNumbersLoading,
       error: servicesError?.message || activeNumbersError?.message || null,
     }));
@@ -80,4 +80,4 @@ export const useVirtualSim = (initialCountry = 'indonesia') => {
     // Add other functions here as needed
   };
 };
-
+    

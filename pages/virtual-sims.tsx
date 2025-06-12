@@ -42,28 +42,28 @@ export default function VirtualSimsPage() {
 
     const result = await purchaseNumber(serviceId, operator);
     if (result && result.status) {
-      toast.success(`Successfully purchased number: ${result.data.number}`);
+      toast.success(`Successfully purchased number: ${result.data.phone_number}`);
       setCredits(prev => prev - 1); // Deduct 1 credit per purchase
       localStorage.setItem('user_credits', (credits - 1).toString());
       loadActiveNumbers(); // Reload active numbers after purchase
     } else {
-      toast.error(`Failed to purchase number: ${result?.data?.msg || 'Unknown error'}`);
+      toast.error(`Failed to purchase number: ${result?.error || 'Unknown error'}`);
     }
   };
 
   const handleCheckStatus = async (orderId: string) => {
     // Implement check status logic here
-    toast.info(`Checking status for order: ${orderId}`);
+    toast(`Checking status for order: ${orderId}`);
   };
 
   const handleReactivate = async (orderId: string) => {
     // Implement reactivate logic here
-    toast.info(`Reactivating order: ${orderId}`);
+    toast(`Reactivating order: ${orderId}`);
   };
 
   const handleCancel = async (orderId: string) => {
     // Implement cancel logic here
-    toast.info(`Cancelling order: ${orderId}`);
+    toast(`Cancelling order: ${orderId}`);
   };
 
   if (loading) {
@@ -82,14 +82,14 @@ export default function VirtualSimsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {services.length > 0 ? (
             services.map((service: VirtualService) => (
-              <div key={service.id} className="border p-4 rounded-lg shadow-sm">
+              <div key={service.service_id} className="border p-4 rounded-lg shadow-sm">
                 <h3 className="text-lg font-bold">{service.name}</h3>
                 <p>Price: Rp {service.price.toLocaleString()}</p>
-                <p>Available: {service.count}</p>
+                <p>Available: {service.available_numbers}</p>
                 <p>Duration: {service.duration} minutes</p>
-                {service.count > 0 ? (
+                {service.available_numbers > 0 ? (
                   <button
-                    onClick={() => handlePurchase(service.id, 'any')}
+                    onClick={() => handlePurchase(service.service_id, 'any')}
                     className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                   >
                     Purchase
@@ -149,3 +149,4 @@ export default function VirtualSimsPage() {
   );
 }
 
+      

@@ -13,50 +13,57 @@ export interface VirtuSimResponse<T> {
 }
 
 class VirtualSimService {
-  private readonly baseUrl = 'https://virtusim.com/api/v2/json.php';
-  private readonly apiKey = process.env.NEXT_PUBLIC_VIRTUSIM_API_KEY;
+  // Menggunakan NEXT_PUBLIC_BACKEND_URL untuk base URL backend
+  private readonly baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+  // API key tidak lagi dibutuhkan di frontend karena backend yang akan menggunakannya
+  // private readonly apiKey = process.env.NEXT_PUBLIC_VIRTUSIM_API_KEY;
   private readonly timeout = 15000; // 15 detik timeout
   private readonly retryAttempts = 3;
   private readonly retryDelay = 1000; // 1 detik
 
   private async makeRequest<T>(
-    action: string, 
-    params: Record<string, string> = {}, 
+    endpoint: string, // Endpoint relatif ke backend, misal: '/api/virtusim/services'
+    method: 'GET' | 'POST' = 'GET',
+    params: Record<string, any> = {},
     attempt: number = 1
   ): Promise<VirtuSimResponse<T>> {
     try {
-      if (!this.apiKey) {
-        throw new Error('API key not configured');
-      }
-
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
-      const queryParams = new URLSearchParams({
-        api_key: this.apiKey,
-        action,
-        ...params
-      });
-
-      // Gunakan proxy API route Next.js
-      const response = await fetch(`/api/virtusim?${queryParams.toString()}`, {
-        method: 'GET',
+      let url = `${this.baseUrl}${endpoint}`;
+      let options: RequestInit = {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
         signal: controller.signal,
         cache: 'no-cache'
-      });
+      };
+
+      if (method === 'GET') {
+        const queryParams = new URLSearchParams(params).toString();
+        if (queryParams) {
+          url = `${url}?${queryParams}`;
+        }
+      } else if (method === 'POST') {
+        options.body = JSON.stringify(params);
+      }
+
+      const response = await fetch(url, options);
 
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error(`Network error: ${response.status} ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.detail || `Network error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
 
+      // Backend Anda sudah mengembalikan format { status: boolean, data: T, error?: string }
+      // Jadi kita bisa langsung mengembalikan data tersebut
       return {
         ...data,
         timestamp: TIMESTAMP,
@@ -69,7 +76,7 @@ class VirtualSimService {
       if (attempt < this.retryAttempts) {
         console.log(`Retrying request (Attempt ${attempt + 1})...`);
         await new Promise(resolve => setTimeout(resolve, this.retryDelay * attempt));
-        return this.makeRequest<T>(action, params, attempt + 1);
+        return this.makeRequest<T>(endpoint, method, params, attempt + 1);
       }
 
       return {
@@ -81,46 +88,82 @@ class VirtualSimService {
     }
   }
 
-  async getServices(country: string = 'indonesia'): Promise<VirtuSimResponse<VirtualService[]>> {
-    const response = await this.makeRequest<any[]>('services', { 
+  // Account Endpoints
+  async checkBalance(): Promise<VirtuSimResponse<any>> {
+    return this.makeRequest<any>('/api/virtusim/balance');
+  }
+
+  async getBalanceLogs(): Promise<VirtuSimResponse<any>> {
+    return this.makeRequest<any>('/api/virtusim/balance_logs');
+  }
+
+  async getRecentActivity(): Promise<VirtuSimResponse<any>> {
+    return this.makeRequest<any>('/api/virtusim/recent_activity');
+  }
+
+  // Service Endpoints
+  async getServices(country: string = 'indonesia', service: string = 'wa'): Promise<VirtuSimResponse<VirtualService[]>> {
+    const response = await this.makeRequest<any[]>('/api/virtusim/services', 'GET', {
       country: country.toLowerCase(),
-      service: 'wa'
+      service: service.toLowerCase()
     });
 
+    // Transformasi data jika diperlukan, sesuaikan dengan struktur VirtualService
     if (response.status && Array.isArray(response.data)) {
-      const transformedData: VirtualService[] = response.data.map(service => ({
-        service_id: service.id || '',
-        name: service.name || 'Unknown Service',
-        description: service.description || '',
-        country: country.toLowerCase(),
-        country_code: country.toUpperCase().slice(0, 2),
-        price: parseFloat(service.price) || 0,
-        price_formatted: this.formatPrice(service.price),
-        available_numbers: parseInt(service.available) || 0,
-        status: service.status?.toLowerCase() === 'available' ? 'available' : 'unavailable',
-        duration: service.duration || '30 minutes',
-        category: service.category || 'standard',
-        is_premium: parseFloat(service.price) > 10000
+      const transformedData: VirtualService[] = response.data.map(svc => ({
+        service_id: svc.id || '',
+        name: svc.name || 'Unknown Service',
+        description: svc.description || '',
+        country: svc.country || country.toLowerCase(),
+        country_code: svc.country_code || country.toUpperCase().slice(0, 2),
+        price: parseFloat(svc.price) || 0,
+        price_formatted: this.formatPrice(svc.price),
+        available_numbers: parseInt(svc.count) || 0, // Menggunakan 'count' dari backend
+        status: svc.status?.toLowerCase() === 'available' ? 'available' : 'unavailable',
+        duration: svc.duration || '30 minutes',
+        category: svc.category || 'standard',
+        is_premium: parseFloat(svc.price) > 10000 // Contoh logika premium
       }));
 
-      return {
-        ...response,
-        data: transformedData
-      };
+      return { ...response, data: transformedData };
     }
 
     return response;
   }
 
-  async purchaseNumber(serviceId: string): Promise<VirtuSimResponse<{
-    order_id: string;
-    phone_number: string;
-    credits_left: number;
-    activation_time: string;
-    expiry_time: string;
-  }>> {
-    const response = await this.makeRequest<any>('purchase', { 
-      id: serviceId 
+  async getCountries(): Promise<VirtuSimResponse<any>> {
+    return this.makeRequest<any>('/api/virtusim/list_country');
+  }
+
+  async getOperators(country: string): Promise<VirtuSimResponse<any>> {
+    return this.makeRequest<any>('/api/virtusim/list_operator', 'GET', { country });
+  }
+
+  // Transaction Endpoints
+  async getActiveOrders(): Promise<VirtuSimResponse<VirtualNumber[]>> {
+    const response = await this.makeRequest<any[]>('/api/virtusim/active_orders');
+
+    // Transformasi data jika diperlukan, sesuaikan dengan struktur VirtualNumber
+    if (response.status && Array.isArray(response.data)) {
+      const transformedData: VirtualNumber[] = response.data.map(order => ({
+        id: order.id || '',
+        phone_number: order.number || order.phone_number || '',
+        country_code: order.country || 'ID', // Sesuaikan jika backend memberikan kode negara
+        status: order.status?.toLowerCase() || 'unknown', // Sesuaikan dengan status dari backend
+        activation_date: order.activated_at || TIMESTAMP,
+        expiry_date: order.expires_at || new Date(Date.now() + 30 * 60000).toISOString(),
+        sms_received: parseInt(order.messages_count) || 0,
+        service_name: order.service_name || 'Unknown Service'
+      }));
+      return { ...response, data: transformedData };
+    }
+    return response;
+  }
+
+  async purchaseNumber(serviceId: string, operator: string = 'any'): Promise<VirtuSimResponse<{ order_id: string; phone_number: string; credits_left: number; activation_time: string; expiry_time: string; }>> {
+    const response = await this.makeRequest<any>('/api/virtusim/order', 'POST', {
+      service: serviceId,
+      operator: operator
     });
 
     if (response.status && response.data) {
@@ -128,72 +171,38 @@ class VirtualSimService {
         ...response,
         data: {
           order_id: response.data.id || '',
-          phone_number: response.data.phone_number || '',
+          phone_number: response.data.number || '', // Sesuaikan dengan key dari backend
           credits_left: parseInt(response.data.credits_left) || 0,
-          activation_time: TIMESTAMP,
-          expiry_time: new Date(Date.now() + 30 * 60000).toISOString()
+          activation_time: response.data.activation_time || TIMESTAMP, // Sesuaikan dengan key dari backend
+          expiry_time: response.data.expiry_time || new Date(Date.now() + 30 * 60000).toISOString() // Sesuaikan dengan key dari backend
         }
       };
     }
-
     return response;
   }
 
-  async getActiveNumbers(): Promise<VirtuSimResponse<VirtualNumber[]>> {
-    const response = await this.makeRequest<any[]>('numbers');
-    
-    if (response.status && Array.isArray(response.data)) {
-      const transformedData: VirtualNumber[] = response.data.map(number => ({
-        id: number.id || '',
-        phone_number: number.number || number.phone_number || '',
-        country_code: number.country || 'ID',
-        status: number.status?.toLowerCase() || 'expired',
-        activation_date: number.activated_at || TIMESTAMP,
-        expiry_date: number.expires_at || new Date(Date.now() + 30 * 60000).toISOString(),
-        sms_received: parseInt(number.messages_count) || 0,
-        service_name: number.service_name || 'WhatsApp'
-      }));
-
-      return {
-        ...response,
-        data: transformedData
-      };
-    }
-
-    return response;
+  async reactiveOrder(orderId: string): Promise<VirtuSimResponse<any>> {
+    return this.makeRequest<any>('/api/virtusim/reactive_order', 'POST', { id: orderId });
   }
 
-  async checkSMS(numberId: string): Promise<VirtuSimResponse<{
-    messages: VirtualSMSMessage[];
-  }>> {
-    const response = await this.makeRequest<any>('sms', { 
-      id: numberId 
-    });
+  async checkOrderStatus(orderId: string): Promise<VirtuSimResponse<any>> {
+    return this.makeRequest<any>('/api/virtusim/check_order', 'GET', { id: orderId });
+  }
 
-    if (response.status && response.data?.messages) {
-      const transformedMessages: VirtualSMSMessage[] = Array.isArray(response.data.messages) 
-        ? response.data.messages.map((msg: any) => ({
-            id: msg.id || '',
-            text: msg.text || msg.content || '',
-            sender: msg.sender || 'Unknown',
-            received_at: msg.received_at || TIMESTAMP
-          }))
-        : [];
+  async setOrderStatus(orderId: string, status: number): Promise<VirtuSimResponse<any>> {
+    return this.makeRequest<any>('/api/virtusim/set_status', 'POST', { id: orderId, status });
+  }
 
-      return {
-        ...response,
-        data: {
-          messages: transformedMessages
-        }
-      };
-    }
+  async getOrderHistory(): Promise<VirtuSimResponse<any>> {
+    return this.makeRequest<any>('/api/virtusim/order_history');
+  }
 
-    return {
-      ...response,
-      data: {
-        messages: []
-      }
-    };
+  async getOrderDetail(orderId: string): Promise<VirtuSimResponse<any>> {
+    return this.makeRequest<any>('/api/virtusim/detail_order', 'GET', { id: orderId });
+  }
+
+  async createDeposit(method: number, amount: number, phone: string): Promise<VirtuSimResponse<any>> {
+    return this.makeRequest<any>('/api/virtusim/deposit', 'POST', { method, amount, phone });
   }
 
   // Helper methods
@@ -205,20 +214,22 @@ class VirtualSimService {
     }).format(numericPrice || 0);
   }
 
-  private validateResponse(response: any): boolean {
-    return response && typeof response === 'object' && 'status' in response;
-  }
+  // validateResponse dan handleError tidak lagi diperlukan karena makeRequest sudah menanganinya
+  // private validateResponse(response: any): boolean {
+  //   return response && typeof response === 'object' && 'status' in response;
+  // }
 
-  private handleError(error: unknown): VirtuSimResponse<never> {
-    console.error('Service Error:', error);
-    return {
-      status: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-      timestamp: TIMESTAMP,
-      user: USER
-    };
-  }
+  // private handleError(error: unknown): VirtuSimResponse<never> {
+  //   console.error('Service Error:', error);
+  //   return {
+  //     status: false,
+  //     error: error instanceof Error ? error.message : 'Unknown error occurred',
+  //     timestamp: TIMESTAMP,
+  //     user: USER
+  //   };
+  // }
 }
 
 // Export instance
 export const virtualSimService = new VirtualSimService();
+

@@ -36,35 +36,71 @@ const ImageGenerator: React.FC<Props> = ({ email, initialCredits }) => {
     setGeneratedImage(null);
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/generate-image`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_email: email,
-          prompt: prompt.trim()
-        }),
-      });
-
-      if (response.status === 402) {
-        alert('Kredit tidak cukup! Minimal butuh 10 kredit untuk generate gambar.');
-        return;
-      }
-
-      const data = await response.json();
-
-      if (response.ok && data.image) {
-        setGeneratedImage(data.image);
-        const newCredits = parseInt(data.credits);
-        setCredits(isGuest ? Math.min(newCredits, 25) : newCredits);
+      // Untuk development, gunakan mock image
+      if (process.env.NODE_ENV === 'development') {
+        // Simulasi delay
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        // Mock generated images (placeholder images)
+        const mockImages = [
+          'https://picsum.photos/512/512?random=1',
+          'https://picsum.photos/512/512?random=2',
+          'https://picsum.photos/512/512?random=3',
+          'https://picsum.photos/512/512?random=4',
+          'https://picsum.photos/512/512?random=5',
+        ];
+        
+        const randomImage = mockImages[Math.floor(Math.random() * mockImages.length)];
+        setGeneratedImage(randomImage);
+        
+        // Kurangi kredit
+        const newCredits = Math.max(0, credits - 10);
+        setCredits(newCredits);
+        localStorage.setItem('user_credits', String(newCredits));
         setPrompt('');
+        
       } else {
-        throw new Error(data.error || 'Failed to generate image');
+        // Untuk production, gunakan backend
+        const response = await fetch(`${BACKEND_URL}/api/generate-image`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            user_email: email,
+            prompt: prompt.trim()
+          }),
+        });
+
+        if (response.status === 402) {
+          alert('Kredit tidak cukup! Minimal butuh 10 kredit untuk generate gambar.');
+          return;
+        }
+
+        const data = await response.json();
+
+        if (response.ok && data.image) {
+          setGeneratedImage(data.image);
+          const newCredits = parseInt(data.credits);
+          setCredits(isGuest ? Math.min(newCredits, 25) : newCredits);
+          setPrompt('');
+        } else {
+          throw new Error(data.error || 'Failed to generate image');
+        }
       }
     } catch (error) {
       console.error('Image generation error:', error);
-      setError('Gagal membuat gambar. Silakan coba lagi.');
+      
+      // Fallback untuk development jika ada error
+      if (process.env.NODE_ENV === 'development') {
+        setGeneratedImage('https://picsum.photos/512/512?random=fallback');
+        const newCredits = Math.max(0, credits - 10);
+        setCredits(newCredits);
+        localStorage.setItem('user_credits', String(newCredits));
+        setPrompt('');
+      } else {
+        setError('Gagal membuat gambar. Silakan coba lagi.');
+      }
     } finally {
       setLoading(false);
     }

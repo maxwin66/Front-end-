@@ -45,28 +45,41 @@ const MenuPage = () => {
         const isGuest = emailToUse?.includes('@guest.kugy.ai') || false;
         
         try {
-          const response = await fetch(
-            `${BACKEND_URL}/api/credits?user_email=${encodeURIComponent(emailToUse)}`
-          );
-          const data = await response.json();
-
-          if (response.ok) {
-            const newCredits = parseInt(data.credits);
-            const finalCredits = isGuest ? Math.min(newCredits, 25) : newCredits;
+          // Untuk development, langsung gunakan localStorage atau default
+          if (process.env.NODE_ENV === 'development') {
+            const storedCredits = localStorage.getItem("user_credits");
+            const urlCredits = params.get("credits");
+            const parsedCredits = urlCredits ? parseInt(urlCredits) : (storedCredits ? parseInt(storedCredits) : (isGuest ? 25 : 75));
+            const finalCredits = isGuest ? Math.min(parsedCredits, 25) : parsedCredits;
             setCredits(finalCredits);
             localStorage.setItem("user_credits", String(finalCredits));
             setEmail(emailToUse);
           } else {
-            const storedCredits = localStorage.getItem("user_credits");
-            const parsedCredits = storedCredits ? parseInt(storedCredits) : (isGuest ? 25 : 75);
-            const finalCredits = isGuest ? Math.min(parsedCredits, 25) : parsedCredits;
-            setCredits(finalCredits);
-            localStorage.setItem("user_credits", String(finalCredits));
+            // Untuk production, coba fetch dari backend
+            const response = await fetch(
+              `${BACKEND_URL}/api/credits?user_email=${encodeURIComponent(emailToUse)}`
+            );
+            const data = await response.json();
+
+            if (response.ok) {
+              const newCredits = parseInt(data.credits);
+              const finalCredits = isGuest ? Math.min(newCredits, 25) : newCredits;
+              setCredits(finalCredits);
+              localStorage.setItem("user_credits", String(finalCredits));
+              setEmail(emailToUse);
+            } else {
+              const storedCredits = localStorage.getItem("user_credits");
+              const parsedCredits = storedCredits ? parseInt(storedCredits) : (isGuest ? 25 : 75);
+              const finalCredits = isGuest ? Math.min(parsedCredits, 25) : parsedCredits;
+              setCredits(finalCredits);
+              localStorage.setItem("user_credits", String(finalCredits));
+            }
           }
         } catch (error) {
           console.error("Error fetching credits:", error);
           const storedCredits = localStorage.getItem("user_credits");
-          const parsedCredits = storedCredits ? parseInt(storedCredits) : (isGuest ? 25 : 75);
+          const urlCredits = params.get("credits");
+          const parsedCredits = urlCredits ? parseInt(urlCredits) : (storedCredits ? parseInt(storedCredits) : (isGuest ? 25 : 75));
           const finalCredits = isGuest ? Math.min(parsedCredits, 25) : parsedCredits;
           setCredits(finalCredits);
           localStorage.setItem("user_credits", String(finalCredits));
@@ -115,7 +128,9 @@ const MenuPage = () => {
   const handleVirtualSimsClick = () => {
     const isGuest = email?.includes('@guest.kugy.ai') || false;
     if (!credits || credits < 25 || (isGuest && credits > 25)) {
-      alert("Maaf, untuk membeli nomor virtual diperlukan minimal 25 kredit.");
+      // Tampilkan pesan error dengan styling yang lebih baik
+      setError("Maaf, untuk membeli nomor virtual diperlukan minimal 25 kredit.");
+      setTimeout(() => setError(''), 3000);
       return;
     }
     router.push(`/virtual-sims?email=${encodeURIComponent(email)}&credits=${credits}`);
@@ -159,6 +174,14 @@ const MenuPage = () => {
             Kredit Tersedia: <span className="font-bold">{credits}</span>
           </span>
         </div>
+
+        {error && (
+          <div className="w-full mb-4 px-4 py-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-xl text-center">
+            <span className="text-sm font-medium text-red-600 dark:text-red-400">
+              {error}
+            </span>
+          </div>
+        )}
 
         <button 
           onClick={handleChatClick}

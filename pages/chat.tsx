@@ -78,53 +78,101 @@ const ChatPage: React.FC = () => {
     setMessages(prev => [...prev, userMessage]);
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_email: email,
-          message: userMessage.content,
-          model_select: model
-        }),
-      });
-
-      if (response.status === 402) {
-        alert(
-          lang === 'id'
-            ? 'Kredit Anda habis. Silakan login dengan Google untuk mendapatkan kredit tambahan.'
-            : lang === 'en'
-            ? 'Out of credits. Please login with Google to get additional credits.'
-            : 'クレジットがなくなりました。Googleでログインして追加クレジットを取得してください。'
-        );
-        return;
-      }
-
-      const data = await response.json();
-      
-      if (response.ok) {
+      // Untuk development, gunakan mock response
+      if (process.env.NODE_ENV === 'development') {
+        // Simulasi delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Mock AI responses
+        const mockResponses = [
+          "Halo! Senang bisa mengobrol dengan Anda. Ada yang bisa saya bantu hari ini?",
+          "Itu pertanyaan yang menarik! Saya akan coba membantu Anda dengan sebaik-baiknya.",
+          "Terima kasih sudah berbagi. Saya di sini untuk membantu Anda kapan saja.",
+          "Wah, seru sekali! Ceritakan lebih lanjut tentang itu.",
+          "Saya mengerti. Mari kita bahas lebih dalam tentang hal tersebut.",
+          "Bagus sekali! Apakah ada hal lain yang ingin Anda tanyakan?",
+          "Saya senang bisa membantu! Jangan ragu untuk bertanya apa saja.",
+          "Itu ide yang bagus! Bagaimana kalau kita eksplorasi lebih jauh?",
+        ];
+        
+        const randomResponse = mockResponses[Math.floor(Math.random() * mockResponses.length)];
+        
         const aiMessage: Message = {
           role: 'assistant',
-          content: data.reply,
+          content: randomResponse,
           timestamp: new Date(),
           id: (Date.now() + 1).toString()
         };
         
         setMessages(prev => [...prev, aiMessage]);
-        const newCredits = parseInt(data.credits);
-        setCredits(isGuest ? Math.min(newCredits, 25) : newCredits);
-        localStorage.setItem('user_credits', String(isGuest ? Math.min(newCredits, 25) : newCredits));
+        
+        // Kurangi kredit untuk simulasi
+        const newCredits = Math.max(0, credits - 1);
+        setCredits(newCredits);
+        localStorage.setItem('user_credits', String(newCredits));
+        
       } else {
-        throw new Error(data.error || 'Failed to get response');
+        // Untuk production, gunakan backend
+        const response = await fetch(`${BACKEND_URL}/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_email: email,
+            message: userMessage.content,
+            model_select: model
+          }),
+        });
+
+        if (response.status === 402) {
+          alert(
+            lang === 'id'
+              ? 'Kredit Anda habis. Silakan login dengan Google untuk mendapatkan kredit tambahan.'
+              : lang === 'en'
+              ? 'Out of credits. Please login with Google to get additional credits.'
+              : 'クレジットがなくなりました。Googleでログインして追加クレジットを取得してください。'
+          );
+          return;
+        }
+
+        const data = await response.json();
+        
+        if (response.ok) {
+          const aiMessage: Message = {
+            role: 'assistant',
+            content: data.reply,
+            timestamp: new Date(),
+            id: (Date.now() + 1).toString()
+          };
+          
+          setMessages(prev => [...prev, aiMessage]);
+          const newCredits = parseInt(data.credits);
+          setCredits(isGuest ? Math.min(newCredits, 25) : newCredits);
+          localStorage.setItem('user_credits', String(isGuest ? Math.min(newCredits, 25) : newCredits));
+        } else {
+          throw new Error(data.error || 'Failed to get response');
+        }
       }
     } catch (error) {
       console.error('Chat error:', error);
-      alert(
-        lang === 'id'
-          ? 'Gagal mengirim pesan. Silakan coba lagi.'
-          : lang === 'en'
-          ? 'Failed to send message. Please try again.'
-          : 'メッセージの送信に失敗しました。もう一度お試しください。'
-      );
+      
+      // Fallback untuk development jika ada error
+      if (process.env.NODE_ENV === 'development') {
+        const fallbackMessage: Message = {
+          role: 'assistant',
+          content: "Maaf, saya sedang mengalami gangguan teknis. Tapi saya tetap di sini untuk membantu Anda! Silakan coba lagi.",
+          timestamp: new Date(),
+          id: (Date.now() + 1).toString()
+        };
+        setMessages(prev => [...prev, fallbackMessage]);
+      } else {
+        alert(
+          lang === 'id'
+            ? 'Gagal mengirim pesan. Silakan coba lagi.'
+            : lang === 'en'
+            ? 'Failed to send message. Please try again.'
+            : 'メッセージの送信に失敗しました。もう一度お試しください。'
+        );
+      }
     } finally {
       setLoading(false);
     }

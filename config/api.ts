@@ -1,6 +1,25 @@
 // Constants
-export const CURRENT_TIMESTAMP = '2025-06-11 19:52:28';
-export const CURRENT_USER = 'lillysummer9794';
+export const CURRENT_TIMESTAMP = '2025-06-14 12:00:00';
+export const CURRENT_USER = 'kugy_user';
+
+// Backend API Configuration
+export const BACKEND_API = {
+  BASE_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'https://backend-cb98.onrender.com',
+  ENDPOINTS: {
+    CHAT: '/api/chat',
+    MULTI_AGENT: '/api/multi-agent',
+    IMAGE_GENERATION: '/api/generate-image',
+    VIRTUAL_SIMS: '/api/virtusim',
+    USER: '/api/user',
+    CREDITS: '/api/credits',
+    AUTH: '/auth',
+    MULTI_AGENT_STATUS: '/multi-agent/status'
+  },
+  HEADERS: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  }
+};
 
 // API Configurations
 export const VIRTUSIM_API = {
@@ -46,4 +65,67 @@ export const addMetadata = <T extends object>(data: T) => {
     timestamp: CURRENT_TIMESTAMP,
     user: CURRENT_USER
   };
+};
+
+// Helper functions for Backend API calls
+export const backendApiCall = async (endpoint: string, options: RequestInit = {}) => {
+  const url = `${BACKEND_API.BASE_URL}${endpoint}`;
+  const defaultOptions: RequestInit = {
+    headers: BACKEND_API.HEADERS,
+    credentials: 'include',
+    ...options
+  };
+
+  try {
+    const response = await fetch(url, defaultOptions);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.detail || data.error || `HTTP error! status: ${response.status}`);
+    }
+    
+    return data;
+  } catch (error) {
+    console.error(`API call failed for ${endpoint}:`, error);
+    throw error;
+  }
+};
+
+// Specific API functions
+export const multiAgentAPI = {
+  processTask: async (task: string, useMultiAgent: boolean = true) => {
+    return backendApiCall(BACKEND_API.ENDPOINTS.MULTI_AGENT, {
+      method: 'POST',
+      body: JSON.stringify({
+        task,
+        use_multi_agent: useMultiAgent
+      })
+    });
+  },
+  
+  getStatus: async () => {
+    return backendApiCall(BACKEND_API.ENDPOINTS.MULTI_AGENT_STATUS);
+  }
+};
+
+export const userAPI = {
+  getCurrentUser: async () => {
+    return backendApiCall(BACKEND_API.ENDPOINTS.USER);
+  },
+  
+  getCredits: async (userEmail?: string) => {
+    const endpoint = userEmail 
+      ? `${BACKEND_API.ENDPOINTS.CREDITS}?user_email=${encodeURIComponent(userEmail)}`
+      : BACKEND_API.ENDPOINTS.CREDITS;
+    return backendApiCall(endpoint);
+  }
+};
+
+export const chatAPI = {
+  sendMessage: async (message: string) => {
+    return backendApiCall(BACKEND_API.ENDPOINTS.CHAT, {
+      method: 'POST',
+      body: JSON.stringify({ message })
+    });
+  }
 };

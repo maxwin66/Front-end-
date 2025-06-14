@@ -136,6 +136,16 @@ const MenuPage = () => {
     router.push(`/virtual-sims?email=${encodeURIComponent(email)}&credits=${credits}`);
   };
 
+  const handleKugyAgentClick = () => {
+    const isGuest = email?.includes('@guest.kugy.ai') || false;
+    if (!credits || credits < 5 || (isGuest && credits > 25)) {
+      setError("Maaf, untuk menggunakan KugyAgent diperlukan minimal 5 kredit.");
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+    router.push(`/KugyAgent?email=${encodeURIComponent(email)}&credits=${credits}`);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={darkMode ? darkBg : animeBg}>
@@ -191,6 +201,21 @@ const MenuPage = () => {
           {credits === 0 && (
             <span className="block text-xs font-normal mt-1">
               Kredit habis
+            </span>
+          )}
+        </button>
+
+        <button 
+          onClick={handleKugyAgentClick}
+          className="w-full mb-4 py-4 rounded-2xl font-bold text-white text-lg bg-gradient-to-r from-indigo-500 to-cyan-400 shadow-lg hover:scale-105 hover:shadow-2xl transition-all duration-200"
+        >
+          🤖 KugyAgent
+          <span className="block text-xs font-normal mt-1">
+            Multi-AI Collaboration
+          </span>
+          {(credits || 0) < 5 && (
+            <span className="block text-xs font-normal mt-1">
+              Butuh 5 kredit
             </span>
           )}
         </button>
